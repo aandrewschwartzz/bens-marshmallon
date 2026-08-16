@@ -1,0 +1,1380 @@
+<!doctype html>
+<html lang="en" data-visualize-standalone>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>Ben's Marshmallon</title>
+<style>:root {
+  color-scheme: light dark;
+  background-color: transparent !important;
+
+  /* Agent-facing contract; keep in sync with SKILL.md. */
+  --background: var(
+    --main-surface-primary,
+    light-dark(rgb(255 255 255), rgb(24 24 24))
+  );
+  --foreground: light-dark(rgb(26 28 31), rgb(255 255 255));
+  --card: color-mix(in oklab, var(--foreground) 5%, transparent);
+  --card-foreground: var(--foreground);
+  --popover: light-dark(rgb(255 255 255), rgb(45 45 45));
+  --popover-foreground: var(--foreground);
+  --primary: light-dark(rgb(51 156 255), rgb(131 195 255));
+  --primary-foreground: light-dark(rgb(255 255 255), rgb(13 13 13));
+  --secondary: light-dark(rgb(255 255 255 / 96%), rgb(54 54 54 / 96%));
+  --secondary-foreground: var(--foreground);
+  --muted: color-mix(in srgb, var(--foreground) 10%, transparent);
+  --muted-foreground: light-dark(
+    rgb(26 28 31 / 49.4%),
+    rgb(255 255 255 / 49.8%)
+  );
+  --accent: light-dark(rgb(229 242 255), rgb(13 39 63));
+  --accent-foreground: var(--primary);
+  --destructive: light-dark(rgb(226 85 7), rgb(255 133 73));
+  --border: light-dark(rgb(26 28 31 / 8%), rgb(255 255 255 / 8.2%));
+  --input: light-dark(
+    rgb(26 28 31 / 11.8%),
+    color-mix(in oklab, rgb(0 0 0) 10%, transparent)
+  );
+  --ring: light-dark(rgb(51 156 255), rgb(131 195 255 / 76%));
+  --font-size-base: 14px;
+  --red: light-dark(rgb(186 38 35), rgb(250 66 62));
+  --green: light-dark(rgb(0 162 64), rgb(64 201 119));
+
+  /* Internal implementation variables; not part of the agent contract. */
+  --font-sans: -apple-system, system-ui, "Segoe UI", sans-serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono",
+    monospace;
+  --font-size-normal: max(11px, var(--font-size-base));
+  --font-size-tooltip: calc(var(--font-size-base) - 1px);
+  --font-size-small: max(11px, calc(var(--font-size-base) - 2px));
+  --font-size-h1: calc(var(--font-size-normal) * 1.7142857143);
+  --font-size-h2: calc(var(--font-size-normal) * 1.4285714286);
+  --font-size-h3: calc(var(--font-size-normal) * 1.2857142857);
+  --font-weight-normal: 430;
+  --font-weight-medium: 500;
+  --line-height-normal: calc(var(--font-size-normal) * 1.5);
+  --line-height-tooltip: calc(var(--font-size-tooltip) * 1.4285714286);
+  --line-height-small: calc(var(--font-size-small) + 4px);
+  --radius: 10px;
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-2xl: calc(var(--radius) * 1.6);
+  --radius-full: 9999px;
+  --shadow-sm: 0 1px 2px -1px rgb(0 0 0 / 8%);
+  --checkmark-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 17 17'%3E%3Cpath d='M12.8961 3.64101C13.1297 3.41418 13.4984 3.37523 13.7779 3.56581C14.0571 3.75635 14.1554 4.11331 14.0299 4.41347L13.9615 4.53847L7.71151 13.7045C7.59411 13.8767 7.4063 13.9877 7.19881 14.0072C6.99136 14.0267 6.78564 13.9533 6.63826 13.806L2.88826 10.056L2.79842 9.9457C2.6192 9.67407 2.64927 9.30496 2.88826 9.06581C3.12738 8.82669 3.49647 8.79676 3.76815 8.97597L3.8785 9.06581L7.03084 12.2182L12.8053 3.74941L12.8961 3.64101Z'/%3E%3C/svg%3E");
+
+  /* Legacy aliases; not part of the current agent contract. */
+  --viz-bg: transparent;
+  --viz-panel: var(--card);
+  --viz-border: var(--border);
+  --viz-text: var(--foreground);
+  --viz-muted: var(--muted-foreground);
+  --viz-accent: var(--primary);
+  --viz-accent-text: var(--primary-foreground);
+  --viz-accent-bg: var(--accent);
+  --viz-font-size: var(--font-size-base);
+  --viz-warning: var(--destructive);
+  --color-background-primary: var(--background);
+  --color-text-primary: var(--foreground);
+  --color-border-secondary: var(--border);
+}
+
+:root[data-visualize-standalone] {
+  background-color: var(--background) !important;
+}
+
+/* Generic mobile code-block hosts provide light/dark mode but no series palette.
+   AppBlock hosts set all six variables themselves. */
+:root:not([data-app-block-surface]) {
+  --viz-series-1: var(--primary);
+  --viz-series-2: light-dark(#f3883b, #f59a56);
+  --viz-series-3: light-dark(#5dc977, #74d58b);
+  --viz-series-4: light-dark(#eb77b1, #f08fc0);
+  --viz-series-5: light-dark(#9b79ec, #aa91ef);
+  --viz-series-6: light-dark(#3ab9b1, #5acbc2);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html > body {
+  margin: 0;
+  padding: 5px;
+  color: var(--foreground);
+  background: transparent !important;
+  font-family: var(--font-sans);
+  font-size: var(--font-size-normal);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-normal);
+}
+
+:root:not([data-app-block-surface]) > body {
+  padding: 12px;
+}
+
+a {
+  color: color-mix(in srgb, var(--viz-accent) 80%, var(--viz-text) 20%);
+  cursor: pointer;
+  font-weight: var(--font-weight-medium);
+  text-decoration: none;
+  text-underline-offset: 2px;
+}
+
+a:is(:hover, :focus-visible) {
+  text-decoration-line: underline;
+  text-decoration-style: dashed;
+  text-decoration-thickness: 0.5px;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p {
+  margin-block: 0;
+}
+
+h1 {
+  font-size: var(--font-size-h1);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+}
+
+h2 {
+  font-size: var(--font-size-h2);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+}
+
+h3,
+h4,
+h5,
+h6 {
+  font-size: var(--font-size-h3);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.3;
+}
+
+b,
+strong,
+th {
+  font-weight: var(--font-weight-medium);
+}
+
+code:not(pre code) {
+  display: inline;
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  background: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  overflow-wrap: anywhere;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  word-break: break-word;
+}
+
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  color: var(--foreground);
+  font: inherit;
+  text-align: start;
+}
+
+.table :is(th, td) {
+  padding-block: 10px;
+  padding-inline: 0 24px;
+  overflow-wrap: anywhere;
+  border-bottom: 1px solid var(--border);
+  text-align: start;
+  vertical-align: top;
+}
+
+.table-responsive > .table :is(th, td) {
+  overflow-wrap: break-word;
+}
+
+.table :is(th, td):last-child {
+  padding-inline-end: 0;
+}
+
+.table :is(caption, thead th) {
+  font-weight: 600;
+}
+
+.table thead th {
+  padding-block: 8px;
+  border-bottom-color: color-mix(in srgb, var(--foreground) 16%, transparent);
+}
+
+.table tbody tr:last-child :is(th, td) {
+  border-bottom: 0;
+}
+
+.table.table-sm :is(th, td) {
+  padding-block: 6px;
+}
+
+.table.table-sm :is(th, td):not(:last-child) {
+  padding-inline-end: 16px;
+}
+
+.table :is(.text-end, [align="right"]) {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+.table :is(.text-center, [align="center"]) {
+  text-align: center;
+}
+
+.table .text-nowrap {
+  white-space: nowrap;
+}
+
+#widget {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  padding: 0;
+  background: transparent !important;
+}
+
+.card {
+  min-width: 0;
+  padding: 12px;
+  overflow: hidden;
+  overflow-wrap: break-word;
+  border-radius: var(--radius-2xl);
+  color: var(--card-foreground);
+  background: var(--card);
+}
+
+#widget > :not(.card) {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.tooltip {
+  position: fixed;
+  z-index: 50;
+  top: 0;
+  left: 0;
+  width: max-content;
+  max-width: min(
+    20rem,
+    var(--tooltip-available-width, calc(100vw - 10px)),
+    calc(100vw - 10px)
+  );
+  max-height: min(
+    var(--tooltip-available-height, calc(100vh - 10px)),
+    calc(100vh - 10px)
+  );
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  color: var(--popover-foreground);
+  background: var(--popover);
+  box-shadow: none;
+  font-size: var(--font-size-tooltip);
+  line-height: var(--line-height-tooltip);
+  overflow-wrap: break-word;
+  white-space: normal;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* The bundled tooltip runtime owns [data-tooltip]. AppBlock's CSS-only
+   pseudo-tooltip can widen dense grids even while hidden. */
+main [data-tooltip]::after {
+  content: none;
+}
+
+.viz-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(max(180px, 24%), 1fr));
+  gap: 10px;
+}
+
+.viz-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.viz-stat-value {
+  font-size: var(--font-size-h2);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+}
+
+.viz-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.viz-badge {
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  color: var(--accent-foreground);
+  background: var(--accent);
+  font-weight: var(--font-weight-medium);
+}
+
+small,
+.text-small,
+.viz-badge {
+  font-size: var(--font-size-small);
+  line-height: var(--line-height-small);
+}
+
+.text-muted {
+  color: var(--muted-foreground);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.viz-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.viz-controls > .form-label {
+  display: grid;
+  min-width: min(100%, 260px);
+  flex: 1 1 280px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 2px 12px;
+  margin-bottom: 0;
+}
+
+.viz-controls > .form-label > :is(.form-control, .form-range, .form-select) {
+  grid-column: 1 / -1;
+}
+
+.btn,
+.form-check-input,
+.form-control,
+.form-range,
+.form-select {
+  font: inherit;
+}
+
+.btn {
+  appearance: button;
+  display: inline-flex;
+  inline-size: fit-content;
+  max-inline-size: 100%;
+  min-height: 28px;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin: 0;
+  padding: 0 8px;
+  -webkit-app-region: no-drag;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-lg);
+  color: var(--secondary-foreground);
+  background: var(--secondary);
+  cursor: var(--cursor-interaction, pointer);
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+.btn:is(.btn-block, .viz-tile) {
+  inline-size: 100%;
+}
+
+.btn.viz-tile {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+a.btn {
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.btn:not(:disabled):hover {
+  background: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.btn-primary {
+  border-color: transparent;
+  color: var(--interactive-label-primary-default, var(--primary-foreground));
+  background: var(--interactive-bg-primary-default, var(--foreground));
+  background-clip: padding-box;
+}
+
+.btn-primary .text-muted {
+  color: color-mix(
+    in srgb,
+    var(--interactive-label-primary-default, var(--primary-foreground)) 50%,
+    transparent
+  );
+}
+
+.btn-primary:not(:disabled):hover {
+  background: color-mix(in srgb, var(--foreground) 80%, transparent);
+  background-clip: padding-box;
+}
+
+.btn-ghost {
+  border-color: transparent;
+  color: var(--muted-foreground);
+  background: transparent;
+}
+
+.btn-ghost:not(:disabled):hover {
+  color: var(--foreground);
+  background: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+[data-lucide] {
+  stroke-width: 1.6;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--foreground);
+}
+
+.form-control {
+  display: block;
+  width: 100%;
+  min-height: 28px;
+  padding: 0 8px;
+  outline: none;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-lg);
+  color: var(--foreground);
+  background: var(--secondary);
+}
+
+.form-control::placeholder {
+  color: var(--muted-foreground);
+}
+
+.form-control[type="file"] {
+  padding: 0;
+  overflow: hidden;
+  cursor: var(--cursor-interaction, pointer);
+}
+
+.form-control[type="file"]::file-selector-button {
+  min-height: 26px;
+  margin-right: 8px;
+  padding: 0 8px;
+  border: 0;
+  border-right: 1px solid var(--input);
+  color: var(--secondary-foreground);
+  background: var(--secondary);
+  cursor: inherit;
+  font: inherit;
+}
+
+.form-control[type="file"]:not(:disabled):hover::file-selector-button {
+  background: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.form-control-color[type="color"] {
+  width: 40px;
+  height: 28px;
+  padding: 3px;
+  cursor: var(--cursor-interaction, pointer);
+}
+
+.form-control-color[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.form-control-color[type="color"]::-webkit-color-swatch {
+  border: 0;
+  border-radius: calc(var(--radius-lg) - 4px);
+}
+
+textarea.form-control {
+  height: auto;
+  min-height: 72px;
+  padding: 8px 10px;
+  resize: vertical;
+}
+
+.form-control:focus-visible {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-control:disabled,
+.form-select:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.form-select {
+  appearance: none;
+  display: block;
+  width: 100%;
+  min-height: 28px;
+  margin: 0;
+  padding: 0 32px 0 8px;
+  outline: none;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-lg);
+  color: var(--foreground);
+  background-color: var(--secondary);
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--muted-foreground) 50%),
+    linear-gradient(135deg, var(--muted-foreground) 50%, transparent 50%);
+  background-position:
+    calc(100% - 14px) 50%,
+    calc(100% - 10px) 50%;
+  background-repeat: no-repeat;
+  background-size: 4px 4px;
+  cursor: var(--cursor-interaction, default);
+}
+
+.form-select:not(:disabled):hover {
+  background-color: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.form-select:focus-visible {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-check {
+  display: flex;
+  min-height: 20px;
+  align-items: center;
+  gap: 6px;
+}
+
+.form-check-input {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  margin: 0;
+  border: 1px solid var(--input);
+  color: var(--primary-foreground);
+  background-color: transparent;
+  cursor: var(--cursor-interaction, default);
+  transition:
+    background-color 150ms,
+    border-color 150ms,
+    box-shadow 150ms;
+}
+
+.form-check:not(.form-switch) .form-check-input[type="checkbox"] {
+  border-color: var(--input);
+  border-radius: var(--radius-sm);
+  background-color: var(--secondary);
+  box-shadow: var(--shadow-sm);
+}
+
+.form-check:not(.form-switch)
+  .form-check-input:not(:disabled):not(:checked):hover {
+  background-color: var(--card);
+}
+
+.form-check:not(.form-switch) .form-check-input[type="checkbox"]:checked {
+  border-color: var(--primary);
+  background-color: var(--primary);
+}
+
+.form-check:not(.form-switch)
+  .form-check-input[type="checkbox"]:checked::before {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--primary-foreground);
+  content: "";
+  mask: var(--checkmark-image) center / 12px 12px no-repeat;
+}
+
+.form-check-input[type="radio"] {
+  width: 14px;
+  height: 14px;
+  border-radius: var(--radius-full);
+}
+
+.form-check-input[type="radio"]:checked {
+  border: 2px solid var(--primary);
+  background:
+    radial-gradient(circle, var(--primary-foreground) 0 2.5px, transparent 3px),
+    var(--primary);
+}
+
+.form-check:not(.form-switch) .form-check-input:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.form-check:not(.form-switch) .form-check-input:disabled {
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.form-check:not(.form-switch) .form-check-input:disabled + .form-check-label {
+  cursor: not-allowed;
+}
+
+.form-switch .form-check-input:disabled,
+.form-switch .form-check-input:disabled + .form-check-label {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.form-check-label {
+  color: var(--foreground);
+  cursor: var(--cursor-interaction, default);
+}
+
+.form-switch .form-check-input {
+  position: relative;
+  width: 32px;
+  height: 20px;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--muted);
+  box-shadow: none;
+  transition: background-color 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.form-switch .form-check-input::before {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 16px;
+  height: 16px;
+  box-sizing: border-box;
+  border: 1px solid light-dark(var(--primary-foreground), var(--foreground));
+  border-radius: var(--radius-full);
+  background: light-dark(var(--primary-foreground), var(--foreground));
+  box-shadow: var(--shadow-sm);
+  content: "";
+  transform: translate(2px, -50%);
+  transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.form-switch .form-check-input:checked {
+  background: var(--primary);
+}
+
+.form-switch .form-check-input:checked::before {
+  transform: translate(14px, -50%);
+}
+
+.form-switch .form-check-input:focus-visible {
+  box-shadow: 0 0 0 2px var(--ring);
+}
+
+.form-range {
+  appearance: none;
+  display: block;
+  width: 100%;
+  height: 28px;
+  flex: 1;
+  margin: 0;
+  padding: 0;
+  outline: none;
+  border: 0;
+  accent-color: var(--primary);
+  background: linear-gradient(
+      color-mix(in srgb, var(--foreground) 7%, transparent),
+      color-mix(in srgb, var(--foreground) 7%, transparent)
+    )
+    center / 100% 2px no-repeat;
+}
+
+.form-range::-webkit-slider-runnable-track {
+  height: 28px;
+  background: transparent;
+}
+
+.form-range::-webkit-slider-thumb {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  margin-top: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: light-dark(var(--primary-foreground), var(--foreground));
+}
+
+.form-range:focus-visible::-webkit-slider-thumb {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-range::-moz-range-track {
+  height: 28px;
+  background: transparent;
+}
+
+.form-range::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: light-dark(var(--primary-foreground), var(--foreground));
+}
+
+.form-range:focus-visible::-moz-range-thumb {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-range:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.btn:not(.btn-primary, .viz-tile):is(
+    [aria-pressed="true"],
+    [aria-selected="true"],
+    .is-selected
+  ) {
+  border-color: var(--primary);
+  color: var(--primary-foreground);
+  background: var(--primary);
+}
+
+.btn.viz-tile:is([aria-pressed="true"], [aria-selected="true"], .is-selected) {
+  border-color: var(--primary);
+  box-shadow: inset 0 0 0 1px var(--primary);
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+#widget > svg {
+  width: 100%;
+}
+
+.text-warning,
+.text-destructive {
+  color: var(--destructive);
+}
+</style>
+</head>
+<body>
+<div id="duel-pet-mock" class="dp-wrap">
+  <div class="dp-stage" aria-label="Interactive 240 by 240 pixel battle-pet life counter mockup">
+    <div class="dp-device">
+      <svg class="dp-screen" viewBox="0 0 240 240" role="img" aria-labelledby="dp-title dp-desc" shape-rendering="crispEdges">
+        <title id="dp-title">Ben's Marshmallon battle-pet life counter</title>
+        <desc id="dp-desc">Tap either duelist on the main screen, choose loss or gain, enter any amount, and apply it. Marshmallon reacts to the life-point swing.</desc>
+        <defs>
+          <filter id="dp-glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="3" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <radialGradient id="marsh-body" cx="38%" cy="34%" r="78%">
+            <stop offset="0" stop-color="#fffdf7"/>
+            <stop offset="0.55" stop-color="#fffaf7"/>
+            <stop offset="1" stop-color="#efbfd0"/>
+          </radialGradient>
+          <linearGradient id="card-rim" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#9a5335"/>
+            <stop offset="0.45" stop-color="#b56e45"/>
+            <stop offset="1" stop-color="#7f3c2c"/>
+          </linearGradient>
+          <radialGradient id="art-glow" cx="64%" cy="35%" r="76%">
+            <stop offset="0" stop-color="#fffbd4"/>
+            <stop offset="0.5" stop-color="#f8e89a"/>
+            <stop offset="1" stop-color="#efbe71"/>
+          </radialGradient>
+        </defs>
+
+        <g id="home-screen">
+          <rect width="240" height="240" rx="18" fill="url(#card-rim)"/>
+          <rect x="7" y="7" width="226" height="28" rx="2" fill="#d59a6d" stroke="#3a2117"/>
+          <text x="13" y="27" fill="#1c120d" font-family="Georgia, 'Times New Roman', serif" font-size="13.5" font-weight="500" letter-spacing=".2">BEN'S MARSHMALLON</text>
+          <circle cx="218" cy="21" r="10" fill="#f3df84" stroke="#2b1b12" stroke-width="1"/>
+          <text x="218" y="25" text-anchor="middle" fill="#24170f" font-family="Georgia, serif" font-size="10">光</text>
+          <g font-family="Georgia, serif" font-size="8" text-anchor="middle">
+            <circle cx="181" cy="44" r="7" fill="#ef5d24" stroke="#8a2e18"/>
+            <circle cx="199" cy="44" r="7" fill="#ef5d24" stroke="#8a2e18"/>
+            <circle cx="217" cy="44" r="7" fill="#ef5d24" stroke="#8a2e18"/>
+            <text x="181" y="47" fill="#ffd43d">★</text>
+            <text x="199" y="47" fill="#ffd43d">★</text>
+            <text x="217" y="47" fill="#ffd43d">★</text>
+          </g>
+          <rect x="7" y="53" width="226" height="127" rx="2" fill="#33251d"/>
+          <rect x="11" y="57" width="218" height="119" fill="url(#art-glow)"/>
+
+          <g id="select-p2" class="tap-target" role="button" aria-label="Change rival life points">
+            <rect x="14" y="61" width="96" height="43" rx="5" fill="#fff5d9" stroke="#5b3826" stroke-width="1.5"/>
+            <text x="22" y="76" fill="#60483b" font-family="ui-monospace, monospace" font-size="8" font-weight="500" letter-spacing="1">PLAYER 2</text>
+            <text id="p2-lp" x="21" y="98" fill="#20130d" font-family="Georgia, 'Times New Roman', serif" font-size="25" font-weight="500">8000</text>
+            <text x="102" y="89" text-anchor="end" fill="#5b3826" font-family="Georgia, serif" font-size="16">›</text>
+          </g>
+
+          <g id="pet" class="pet-idle" shape-rendering="geometricPrecision">
+            <path d="M169 62C156 62 148 69 145 79C141 88 141 96 137 103C133 112 124 122 124 134C124 147 131 157 144 165C156 171 181 171 197 165C212 160 220 148 220 134C220 122 215 115 210 107C205 99 201 91 199 82C197 69 185 62 169 62Z" fill="url(#marsh-body)" stroke="#261a16" stroke-width="1.4"/>
+            <path d="M151 74Q168 62 184 73" fill="none" stroke="#261a16" stroke-width="1.4" stroke-linecap="round"/>
+            <circle cx="151" cy="74" r="1.8" fill="#261a16"/>
+            <circle cx="184" cy="73" r="1.8" fill="#261a16"/>
+            <ellipse cx="160.5" cy="82.5" rx="3.9" ry="6.2" fill="#171311"/>
+            <ellipse cx="172.5" cy="82.5" rx="4.1" ry="6.2" fill="#171311"/>
+            <ellipse cx="159.7" cy="79.5" rx="1.15" ry="2" fill="#fffdf7"/>
+            <ellipse cx="171.7" cy="79.5" rx="1.15" ry="2" fill="#fffdf7"/>
+            <ellipse cx="149" cy="90.3" rx="4.7" ry="5.5" fill="#e7a1b8" opacity=".9"/>
+            <ellipse cx="186.7" cy="90.2" rx="5.8" ry="6.2" fill="#e7a1b8" opacity=".9"/>
+          </g>
+          <text id="pet-status" x="166" y="173" text-anchor="middle" fill="#4a2d20" font-family="Georgia, serif" font-size="7" font-weight="500" letter-spacing="1"></text>
+          <g id="reaction" opacity="0">
+            <path id="reaction-burst" d="M158 94L163 102L173 98L170 108L180 112L170 118L176 127L165 125L162 135L155 126L146 132L148 121L137 119L147 112L141 103L152 105Z" fill="#d9422e"/>
+            <text id="reaction-text" x="159" y="117" text-anchor="middle" fill="#fff8df" font-family="ui-monospace, monospace" font-size="9" font-weight="500">-2400</text>
+          </g>
+
+          <g id="select-p1" class="tap-target" role="button" aria-label="Change Ben's life points">
+            <rect x="14" y="128" width="96" height="43" rx="5" fill="#fff5d9" stroke="#5b3826" stroke-width="1.5"/>
+            <text x="22" y="143" fill="#60483b" font-family="ui-monospace, monospace" font-size="8" font-weight="500" letter-spacing="1">BEN · P1</text>
+            <text id="p1-lp" x="21" y="165" fill="#20130d" font-family="Georgia, 'Times New Roman', serif" font-size="25" font-weight="500">8000</text>
+            <text x="102" y="156" text-anchor="end" fill="#5b3826" font-family="Georgia, serif" font-size="16">›</text>
+          </g>
+          <rect x="7" y="184" width="226" height="49" rx="2" fill="#f2ddbd" stroke="#4b2b1d"/>
+          <text x="12" y="197" fill="#21150f" font-family="Georgia, 'Times New Roman', serif" font-size="8" font-weight="500">【FAIRY / EFFECT】</text>
+          <text x="12" y="209" fill="#5d493d" font-family="Georgia, 'Times New Roman', serif" font-size="6.5">Tap a duelist to change Life Points.</text>
+          <line x1="12" y1="216" x2="228" y2="216" stroke="#6a4633"/>
+          <text x="225" y="228" text-anchor="end" fill="#21150f" font-family="Georgia, 'Times New Roman', serif" font-size="8" font-weight="500">ATK / 300   DEF / 500</text>
+        </g>
+
+        <g id="amount-screen" display="none">
+          <rect width="240" height="240" rx="18" fill="url(#card-rim)"/>
+          <rect x="5" y="4" width="230" height="27" rx="5" fill="#d59a6d" stroke="#3a2117"/>
+          <g id="back" class="tap-target" role="button" aria-label="Return to duel">
+            <rect x="4" y="3" width="42" height="23" rx="7" fill="transparent"/>
+            <text x="12" y="19" fill="#20130d" font-family="ui-monospace, monospace" font-size="11">‹</text>
+          </g>
+          <text id="edit-player" x="120" y="21" text-anchor="middle" fill="#20130d" font-family="Georgia, 'Times New Roman', serif" font-size="11" font-weight="500">BEN · 8000 LP</text>
+
+          <g id="sign-loss" class="tap-target" role="button" aria-label="Subtract life points">
+            <rect id="loss-bg" x="8" y="36" width="53" height="31" rx="8" fill="#6e3425"/>
+            <text id="loss-text" x="34" y="56" text-anchor="middle" fill="#fff5d9" font-family="ui-monospace, monospace" font-size="10">− LOSS</text>
+          </g>
+          <g id="sign-gain" class="tap-target" role="button" aria-label="Add life points">
+            <rect id="gain-bg" x="65" y="36" width="53" height="31" rx="8" fill="#fff5d9" stroke="#5b3826"/>
+            <text id="gain-text" x="91" y="56" text-anchor="middle" fill="#60483b" font-family="ui-monospace, monospace" font-size="10">+ GAIN</text>
+          </g>
+          <rect x="124" y="36" width="108" height="31" rx="8" fill="#fff5d9" stroke="#5b3826"/>
+          <text id="amount-value" x="222" y="58" text-anchor="end" fill="#20130d" font-family="ui-monospace, monospace" font-size="20" font-weight="500">0</text>
+
+          <g id="keypad" font-family="ui-monospace, monospace" font-size="14" text-anchor="middle">
+            <g class="key tap-target" data-key="1"><rect x="8" y="77" width="47" height="34" rx="7"/><text x="31.5" y="99">1</text></g>
+            <g class="key tap-target" data-key="2"><rect x="62" y="77" width="47" height="34" rx="7"/><text x="85.5" y="99">2</text></g>
+            <g class="key tap-target" data-key="3"><rect x="116" y="77" width="47" height="34" rx="7"/><text x="139.5" y="99">3</text></g>
+            <g class="key tap-target" data-key="4"><rect x="8" y="117" width="47" height="34" rx="7"/><text x="31.5" y="139">4</text></g>
+            <g class="key tap-target" data-key="5"><rect x="62" y="117" width="47" height="34" rx="7"/><text x="85.5" y="139">5</text></g>
+            <g class="key tap-target" data-key="6"><rect x="116" y="117" width="47" height="34" rx="7"/><text x="139.5" y="139">6</text></g>
+            <g class="key tap-target" data-key="7"><rect x="8" y="157" width="47" height="34" rx="7"/><text x="31.5" y="179">7</text></g>
+            <g class="key tap-target" data-key="8"><rect x="62" y="157" width="47" height="34" rx="7"/><text x="85.5" y="179">8</text></g>
+            <g class="key tap-target" data-key="9"><rect x="116" y="157" width="47" height="34" rx="7"/><text x="139.5" y="179">9</text></g>
+            <g class="key tap-target" data-key="00"><rect x="8" y="197" width="47" height="34" rx="7"/><text x="31.5" y="219">00</text></g>
+            <g class="key tap-target" data-key="0"><rect x="62" y="197" width="47" height="34" rx="7"/><text x="85.5" y="219">0</text></g>
+            <g id="delete" class="key tap-target"><rect x="116" y="197" width="47" height="34" rx="7"/><text x="139.5" y="219">⌫</text></g>
+          </g>
+          <g id="clear" class="utility-key tap-target" role="button" aria-label="Clear amount">
+            <rect x="170" y="77" width="62" height="46" rx="8"/>
+            <text x="201" y="104" text-anchor="middle">CLEAR</text>
+          </g>
+          <g id="apply" class="apply-key tap-target" role="button" aria-label="Apply life point change">
+            <rect x="170" y="130" width="62" height="101" rx="8"/>
+            <text x="201" y="174" text-anchor="middle">APPLY</text>
+            <text id="apply-sign" x="201" y="195" text-anchor="middle">−0</text>
+          </g>
+        </g>
+
+        <g id="game-over-screen" display="none" style="--foreground:#261a16;--card:#fffdf7;--red:#d86f8f;--viz-series-1:#ef5d24;--viz-series-2:#f0bd36;--viz-series-3:#d968a0;--card-foreground:#20130d">
+          <rect width="240" height="240" rx="18" fill="url(#card-rim)"/>
+          <rect x="7" y="35" width="226" height="157" rx="2" fill="#33251d"/>
+          <rect x="11" y="39" width="218" height="149" fill="url(#art-glow)"/>
+          <g id="confetti" aria-hidden="true">
+            <rect x="24" y="28" width="5" height="11" fill="var(--viz-series-1)" transform="rotate(-24 26 33)"/>
+            <rect x="52" y="15" width="5" height="9" fill="var(--viz-series-2)" transform="rotate(31 54 19)"/>
+            <rect x="83" y="31" width="5" height="10" fill="var(--viz-series-3)" transform="rotate(-14 85 36)"/>
+            <rect x="151" y="19" width="5" height="11" fill="var(--viz-series-2)" transform="rotate(21 153 24)"/>
+            <rect x="181" y="34" width="5" height="9" fill="var(--viz-series-3)" transform="rotate(-35 183 38)"/>
+            <rect x="211" y="18" width="5" height="11" fill="var(--viz-series-1)" transform="rotate(16 213 23)"/>
+          </g>
+          <text x="12" y="24" fill="#20130d" font-family="Georgia, 'Times New Roman', serif" font-size="14" font-weight="500" letter-spacing=".4">GAME OVER</text>
+          <text id="winner-name" x="120" y="57" text-anchor="middle" fill="#20130d" font-family="Georgia, 'Times New Roman', serif" font-size="18" font-weight="500">BEN WINS!</text>
+          <g id="game-over-pet">
+            <g shape-rendering="geometricPrecision">
+              <path id="crown" d="M99 78L104 65L112 75L118 60L125 75L133 65L137 78Z" fill="var(--viz-series-2)" stroke="var(--foreground)" stroke-width="1.2"/>
+              <rect x="100" y="77" width="36" height="6" rx="2" fill="var(--viz-series-2)" stroke="var(--foreground)" stroke-width="1.2"/>
+              <path id="final-pet-body" d="M117 82C106 82 99 88 96 97C93 106 93 112 90 119C86 126 78 135 78 146C78 157 84 166 95 172C106 178 128 178 142 172C156 167 163 157 163 145C163 135 158 128 154 121C150 114 147 107 145 99C143 88 132 82 117 82Z" fill="url(#marsh-body)" stroke="#261a16" stroke-width="1.5"/>
+              <path id="final-mouth" d="M101 93Q116 82 131 92" fill="none" stroke="#261a16" stroke-width="1.5" stroke-linecap="round"/>
+              <circle cx="101" cy="93" r="1.9" fill="#261a16"/>
+              <circle cx="131" cy="92" r="1.9" fill="#261a16"/>
+              <ellipse cx="109" cy="101" rx="3.8" ry="6.4" fill="#171311"/>
+              <ellipse cx="120" cy="101" rx="4" ry="6.4" fill="#171311"/>
+              <ellipse cx="108.4" cy="98" rx="1.1" ry="2" fill="#fffdf7"/>
+              <ellipse cx="119.4" cy="98" rx="1.1" ry="2" fill="#fffdf7"/>
+              <ellipse cx="99" cy="108" rx="4.5" ry="5.5" fill="#e7a1b8" opacity=".9"/>
+              <ellipse cx="133" cy="108" rx="5.3" ry="5.8" fill="#e7a1b8" opacity=".9"/>
+            </g>
+          </g>
+          <text id="final-score" x="120" y="185" text-anchor="middle" fill="#20130d" font-family="Georgia, 'Times New Roman', serif" font-size="10" font-weight="500">1200 — 0</text>
+          <g id="new-game" class="new-game-key tap-target" role="button" aria-label="Start a new game">
+            <rect x="50" y="200" width="140" height="31" rx="9"/>
+            <text x="120" y="220" text-anchor="middle">NEW GAME?</text>
+          </g>
+        </g>
+      </svg>
+    </div>
+  </div>
+  <p class="dp-hint">Tap Player 1 or Player 2, then enter any life-point change.</p>
+</div>
+
+<style>
+  #duel-pet-mock.dp-wrap { display: grid; justify-items: center; gap: 12px; padding: 8px 0; color: var(--foreground); }
+  #duel-pet-mock .dp-stage { width: min(100%, 520px); display: grid; place-items: center; padding: 26px; border-radius: 28px; background: color-mix(in srgb, var(--muted) 34%, transparent); }
+  #duel-pet-mock .dp-device { width: min(100%, 420px); aspect-ratio: 1; display: grid; place-items: center; padding: 24px; border-radius: 38px; background: #17191c; box-shadow: 0 20px 42px rgb(0 0 0 / 24%), inset 0 0 0 3px #4d5155; }
+  #duel-pet-mock .dp-screen { width: 100%; height: 100%; border-radius: 18px; overflow: hidden; image-rendering: pixelated; touch-action: manipulation; }
+  #duel-pet-mock .tap-target { cursor: pointer; }
+  #duel-pet-mock .key rect, #duel-pet-mock .utility-key rect { fill: #fff5d9; stroke: #5b3826; }
+  #duel-pet-mock .key text, #duel-pet-mock .utility-key text { fill: #20130d; font-family: ui-monospace, monospace; font-size: 10px; }
+  #duel-pet-mock .apply-key rect { fill: #6e3425; }
+  #duel-pet-mock .apply-key text { fill: #fff5d9; font-family: ui-monospace, monospace; font-size: 10px; font-weight: 500; }
+  #duel-pet-mock .new-game-key rect { fill: #6e3425; }
+  #duel-pet-mock .new-game-key text { fill: #fff5d9; font-family: ui-monospace, monospace; font-size: 11px; font-weight: 500; letter-spacing: 1px; }
+  #duel-pet-mock .tap-target:active { opacity: .72; }
+  #duel-pet-mock .dp-hint { margin: 0; color: var(--muted-foreground); text-align: center; }
+  #duel-pet-mock #pet { transform-origin: 172px 126px; animation: dp-breathe 1.8s steps(2, end) infinite; }
+  #duel-pet-mock.react-hit #pet { animation: dp-hit .52s steps(4, end) 1; }
+  #duel-pet-mock.react-hit #reaction { animation: dp-burst .82s steps(2, end) 1; }
+  #duel-pet-mock.react-celebrate #pet { animation: dp-celebrate .72s steps(4, end) 1; filter: drop-shadow(0 0 5px #f2b72f); }
+  #duel-pet-mock.react-celebrate #reaction { animation: dp-burst .82s steps(2, end) 1; }
+  #duel-pet-mock.react-concern #pet { animation: dp-concern .72s steps(3, end) 1; }
+  #duel-pet-mock.react-concern #reaction { animation: dp-burst .82s steps(2, end) 1; }
+  #duel-pet-mock.react-heal #pet { animation: dp-heal .8s steps(4, end) 1; filter: url(#dp-glow); }
+  #duel-pet-mock.game-won #game-over-pet { transform-origin: 120px 136px; animation: dp-victory .75s steps(4, end) infinite; }
+  #duel-pet-mock.game-won #confetti { animation: dp-confetti 1.4s steps(5, end) infinite; }
+  #duel-pet-mock.game-lost #game-over-pet { transform-origin: 120px 160px; animation: dp-defeat 1.2s steps(3, end) infinite; }
+  #duel-pet-mock.game-lost #crown { display: none; }
+  #duel-pet-mock.game-lost #confetti { display: none; }
+  @keyframes dp-breathe { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-2px) scale(1.02); } }
+  @keyframes dp-hit { 0% { transform: translateX(0) rotate(0); } 25% { transform: translateX(-12px) rotate(-8deg); } 50% { transform: translateX(10px) rotate(7deg); } 75% { transform: translateX(-5px) rotate(-3deg); } 100% { transform: translateX(0) rotate(0); } }
+  @keyframes dp-celebrate { 0%,100% { transform: translateY(0) scale(1); } 30% { transform: translateY(-12px) scale(1.07) rotate(-4deg); } 60% { transform: translateY(-5px) scale(1.04) rotate(4deg); } }
+  @keyframes dp-concern { 0%,100% { transform: translateY(0) scale(1); } 35% { transform: translateY(5px) scale(.92) rotate(-3deg); } 70% { transform: translateY(3px) scale(.95) rotate(3deg); } }
+  @keyframes dp-burst { 0% { opacity: 0; transform: scale(.3); transform-origin: 159px 114px; } 30%,70% { opacity: 1; transform: scale(1); transform-origin: 159px 114px; } 100% { opacity: 0; transform: scale(1.15); transform-origin: 159px 114px; } }
+  @keyframes dp-heal { 0%,100% { transform: translateY(0) scale(1); } 40% { transform: translateY(-8px) scale(1.12); } }
+  @keyframes dp-victory { 0%,100% { transform: translateY(0) rotate(-3deg); } 50% { transform: translateY(-9px) rotate(3deg); } }
+  @keyframes dp-confetti { 0% { transform: translateY(-12px); opacity: 0; } 25% { opacity: 1; } 100% { transform: translateY(36px); opacity: 0; } }
+  @keyframes dp-defeat { 0%,100% { transform: translateY(5px) scaleY(.92); } 50% { transform: translateY(8px) scaleY(.86); } }
+  @media (max-width: 480px) { #duel-pet-mock .dp-stage { padding: 18px; } #duel-pet-mock .dp-device { padding: 18px; border-radius: 30px; } }
+</style>
+
+<script>
+(() => {
+  const root = document.getElementById('duel-pet-mock');
+  const home = root.querySelector('#home-screen');
+  const amountScreen = root.querySelector('#amount-screen');
+  const gameOverScreen = root.querySelector('#game-over-screen');
+  const values = { p1: 8000, p2: 8000 };
+  let selected = 'p1';
+  let mode = 'loss';
+  let amount = '';
+
+  const formatAmount = () => amount === '' ? '0' : String(Number(amount));
+  const selectedName = () => selected === 'p1' ? 'BEN' : 'PLAYER 2';
+  const updateAmountScreen = () => {
+    root.querySelector('#edit-player').textContent = selectedName() + ' · ' + values[selected] + ' LP';
+    root.querySelector('#amount-value').textContent = formatAmount();
+    root.querySelector('#apply-sign').textContent = (mode === 'loss' ? '−' : '+') + formatAmount();
+    const loss = mode === 'loss';
+    root.querySelector('#loss-bg').setAttribute('fill', loss ? '#6e3425' : '#fff5d9');
+    root.querySelector('#loss-bg').setAttribute('stroke', loss ? 'none' : '#5b3826');
+    root.querySelector('#loss-text').setAttribute('fill', loss ? '#fff5d9' : '#60483b');
+    root.querySelector('#gain-bg').setAttribute('fill', loss ? '#fff5d9' : '#6e3425');
+    root.querySelector('#gain-bg').setAttribute('stroke', loss ? '#5b3826' : 'none');
+    root.querySelector('#gain-text').setAttribute('fill', loss ? '#60483b' : '#fff5d9');
+  };
+  const showAmount = (player) => {
+    selected = player;
+    amount = '';
+    mode = 'loss';
+    home.setAttribute('display', 'none');
+    amountScreen.removeAttribute('display');
+    updateAmountScreen();
+  };
+  const showHome = () => {
+    amountScreen.setAttribute('display', 'none');
+    gameOverScreen.setAttribute('display', 'none');
+    home.removeAttribute('display');
+  };
+  const showGameOver = () => {
+    home.setAttribute('display', 'none');
+    amountScreen.setAttribute('display', 'none');
+    gameOverScreen.removeAttribute('display');
+    const benWon = values.p2 === 0;
+    root.classList.remove('react-hit', 'react-celebrate', 'react-concern', 'react-heal', 'game-won', 'game-lost');
+    root.classList.add(benWon ? 'game-won' : 'game-lost');
+    root.querySelector('#winner-name').textContent = benWon ? 'BEN WINS!' : 'PLAYER 2 WINS';
+    root.querySelector('#final-score').textContent = values.p1 + ' — ' + values.p2;
+    root.querySelector('#final-mouth').setAttribute('d', 'M101 93Q116 82 131 92');
+  };
+  const applyChange = () => {
+    const delta = Number(formatAmount());
+    if (!delta) return;
+    values[selected] = mode === 'loss' ? Math.max(0, values[selected] - delta) : values[selected] + delta;
+    root.querySelector('#p1-lp').textContent = String(values.p1);
+    root.querySelector('#p2-lp').textContent = String(values.p2);
+    const opponentHit = mode === 'loss' && selected === 'p2';
+    const benHit = mode === 'loss' && selected === 'p1';
+    const benGain = mode === 'gain' && selected === 'p1';
+    const opponentGain = mode === 'gain' && selected === 'p2';
+    root.querySelector('#reaction-text').textContent = (mode === 'loss' ? '−' : '+') + delta;
+    root.querySelector('#reaction-burst').setAttribute('fill', opponentHit ? '#f0a82f' : benGain ? '#54a95f' : '#d9422e');
+    if (opponentHit) {
+      root.querySelector('#pet-status').textContent = delta >= 2000 ? 'HUGE HIT!' : 'NICE HIT!';
+    } else if (benHit) {
+      root.querySelector('#pet-status').textContent = delta >= 2000 ? 'OH NO, BEN!' : 'BEN!';
+    } else if (selected === 'p1') {
+      root.querySelector('#pet-status').textContent = 'FEELING BETTER!';
+    } else {
+      root.querySelector('#pet-status').textContent = 'UH-OH...';
+    }
+    root.classList.remove('react-hit', 'react-celebrate', 'react-concern', 'react-heal');
+    void root.offsetWidth;
+    root.classList.add(opponentHit || benGain ? 'react-celebrate' : benHit ? 'react-hit' : opponentGain ? 'react-concern' : 'react-heal');
+    showHome();
+    if (values[selected] === 0) {
+      setTimeout(showGameOver, 850);
+    } else {
+      setTimeout(() => {
+        root.classList.remove('react-hit', 'react-celebrate', 'react-concern', 'react-heal');
+        root.querySelector('#pet-status').textContent = '';
+      }, 900);
+    }
+  };
+  const newGame = () => {
+    values.p1 = 8000;
+    values.p2 = 8000;
+    root.querySelector('#p1-lp').textContent = '8000';
+    root.querySelector('#p2-lp').textContent = '8000';
+    root.querySelector('#pet-status').textContent = '';
+    root.classList.remove('game-won', 'game-lost', 'react-hit', 'react-celebrate', 'react-concern', 'react-heal');
+    showHome();
+  };
+
+  root.querySelector('#select-p1').addEventListener('click', () => showAmount('p1'));
+  root.querySelector('#select-p2').addEventListener('click', () => showAmount('p2'));
+  root.querySelector('#back').addEventListener('click', showHome);
+  root.querySelector('#sign-loss').addEventListener('click', () => { mode = 'loss'; updateAmountScreen(); });
+  root.querySelector('#sign-gain').addEventListener('click', () => { mode = 'gain'; updateAmountScreen(); });
+  root.querySelectorAll('[data-key]').forEach((key) => {
+    key.addEventListener('click', () => {
+      if (amount.length >= 5) return;
+      amount = (amount + key.dataset.key).replace(/^0+(?=\d)/, '');
+      updateAmountScreen();
+    });
+  });
+  root.querySelector('#delete').addEventListener('click', () => { amount = amount.slice(0, -1); updateAmountScreen(); });
+  root.querySelector('#clear').addEventListener('click', () => { amount = ''; updateAmountScreen(); });
+  root.querySelector('#apply').addEventListener('click', applyChange);
+  root.querySelector('#new-game').addEventListener('click', newGame);
+})();
+</script>
+
+<script id="codex-visualization-tooltip">/* oxlint-disable typescript/no-unsafe-argument, typescript/no-unsafe-call, typescript/no-unsafe-return */
+// Runs inside the visualization sandbox, not the host webview.
+(() => {
+  if (window.FloatingUIDOM == null) {
+    return;
+  }
+  const { autoUpdate, computePosition, flip, offset, shift, size } =
+    window.FloatingUIDOM;
+  const tooltipPlacements = new Set(["top", "right", "bottom", "left"]);
+  const tooltipId = `codex-visualization-tooltip-${
+    window.crypto?.randomUUID?.() ?? Date.now().toString(36)
+  }`;
+  const tooltipGap = 5;
+  const hoverDelay = 700;
+  const skipDelay = 300;
+  let activeTrigger = null;
+  let pendingTrigger = null;
+  let tooltip = null;
+  let openTimeout = null;
+  let autoUpdateCleanup = null;
+  let positionRequest = 0;
+  let skipDelayUntil = 0;
+
+  const getTrigger = (target) =>
+    target?.nodeType === Node.ELEMENT_NODE
+      ? target.closest("[data-tooltip]")
+      : null;
+  const containsTarget = (trigger, target) =>
+    target?.nodeType != null && trigger.contains(target);
+  const getContent = (trigger) =>
+    trigger.getAttribute("data-tooltip")?.trim() ?? "";
+  const getPlacement = (trigger) => {
+    const placement = trigger.getAttribute("data-tooltip-placement");
+    return tooltipPlacements.has(placement) ? placement : "top";
+  };
+  const getTooltip = () => {
+    if (tooltip == null) {
+      tooltip = document.createElement("div");
+      tooltip.id = tooltipId;
+      tooltip.className = "tooltip";
+      tooltip.setAttribute("role", "tooltip");
+    }
+    return tooltip;
+  };
+  const setDescribedBy = (trigger, described) => {
+    const ids = new Set(
+      (trigger.getAttribute("aria-describedby") ?? "")
+        .split(/\s+/)
+        .filter(Boolean),
+    );
+    if (described) {
+      ids.add(tooltipId);
+    } else {
+      ids.delete(tooltipId);
+    }
+    if (ids.size === 0) {
+      trigger.removeAttribute("aria-describedby");
+    } else {
+      trigger.setAttribute("aria-describedby", [...ids].join(" "));
+    }
+  };
+  const clearOpenTimeout = () => {
+    if (openTimeout != null) {
+      window.clearTimeout(openTimeout);
+      openTimeout = null;
+    }
+    pendingTrigger = null;
+  };
+  const closeTooltip = (activateSkipDelay = true) => {
+    clearOpenTimeout();
+    positionRequest += 1;
+    autoUpdateCleanup?.();
+    autoUpdateCleanup = null;
+    if (activeTrigger == null) {
+      return;
+    }
+    setDescribedBy(activeTrigger, false);
+    activeTrigger = null;
+    tooltip?.remove();
+    if (activateSkipDelay) {
+      skipDelayUntil = Date.now() + skipDelay;
+    }
+  };
+  const updatePosition = (trigger, floating) => {
+    const request = ++positionRequest;
+    void computePosition(trigger, floating, {
+      middleware: [
+        offset(tooltipGap),
+        flip({ padding: tooltipGap }),
+        shift({ padding: tooltipGap }),
+        size({
+          padding: tooltipGap,
+          apply({ availableHeight, availableWidth, elements }) {
+            elements.floating.style.setProperty(
+              "--tooltip-available-width",
+              `${Math.max(0, availableWidth)}px`,
+            );
+            elements.floating.style.setProperty(
+              "--tooltip-available-height",
+              `${Math.max(0, availableHeight)}px`,
+            );
+          },
+        }),
+      ],
+      placement: getPlacement(trigger),
+      strategy: "fixed",
+    })
+      .then(({ x, y }) => {
+        if (activeTrigger !== trigger || request !== positionRequest) {
+          return;
+        }
+        const scale = window.devicePixelRatio || 1;
+        floating.style.transform = `translate(${Math.round(x * scale) / scale}px, ${Math.round(y * scale) / scale}px)`;
+        floating.style.visibility = "visible";
+      })
+      .catch(() => {
+        if (activeTrigger === trigger && request === positionRequest) {
+          closeTooltip(false);
+        }
+      });
+  };
+  const openTooltip = (trigger) => {
+    const content = getContent(trigger);
+    if (!trigger.isConnected || content.length === 0) {
+      return;
+    }
+    clearOpenTimeout();
+    if (activeTrigger === trigger) {
+      return;
+    }
+    closeTooltip();
+    const floating = getTooltip();
+    floating.textContent = content;
+    floating.style.visibility = "hidden";
+    floating.style.transform = "translate(0, 0)";
+    document.body.appendChild(floating);
+    activeTrigger = trigger;
+    setDescribedBy(trigger, true);
+    autoUpdateCleanup = autoUpdate(trigger, floating, () => {
+      updatePosition(trigger, floating);
+    });
+  };
+  const requestOpen = (trigger, immediate = false) => {
+    if (
+      getContent(trigger).length === 0 ||
+      activeTrigger === trigger ||
+      pendingTrigger === trigger
+    ) {
+      return;
+    }
+    clearOpenTimeout();
+    pendingTrigger = trigger;
+    const delay =
+      immediate || activeTrigger != null || Date.now() < skipDelayUntil
+        ? 0
+        : hoverDelay;
+    if (delay === 0) {
+      openTooltip(trigger);
+      return;
+    }
+    openTimeout = window.setTimeout(() => {
+      openTimeout = null;
+      pendingTrigger = null;
+      openTooltip(trigger);
+    }, delay);
+  };
+  const handlePointerOpen = (event) => {
+    if (event.pointerType === "touch") {
+      return;
+    }
+    const trigger = getTrigger(event.target);
+    if (trigger == null || containsTarget(trigger, event.relatedTarget)) {
+      return;
+    }
+    requestOpen(trigger);
+  };
+  const handleLeave = (event) => {
+    const trigger = getTrigger(event.target);
+    if (trigger == null || containsTarget(trigger, event.relatedTarget)) {
+      return;
+    }
+    if (activeTrigger === trigger || pendingTrigger === trigger) {
+      closeTooltip();
+    }
+  };
+  const handleFocusIn = (event) => {
+    const trigger = getTrigger(event.target);
+    if (trigger?.matches(":focus-visible")) {
+      requestOpen(trigger, true);
+    }
+  };
+  const handleKeyDown = (event) => {
+    if (event.key === "Escape") {
+      closeTooltip();
+    }
+  };
+  const handleContextMenu = (event) => {
+    const trigger = getTrigger(event.target);
+    if (activeTrigger === trigger || pendingTrigger === trigger) {
+      closeTooltip();
+    }
+  };
+  const destroy = () => {
+    closeTooltip(false);
+    document.removeEventListener("pointerover", handlePointerOpen);
+    document.removeEventListener("pointerout", handleLeave);
+    document.removeEventListener("focusin", handleFocusIn);
+    document.removeEventListener("focusout", handleLeave);
+    document.removeEventListener("keydown", handleKeyDown);
+    document.removeEventListener("contextmenu", handleContextMenu);
+    tooltip = null;
+  };
+
+  document.addEventListener("pointerover", handlePointerOpen);
+  document.addEventListener("pointerout", handleLeave);
+  document.addEventListener("focusin", handleFocusIn);
+  document.addEventListener("focusout", handleLeave);
+  document.addEventListener("keydown", handleKeyDown);
+  document.addEventListener("contextmenu", handleContextMenu);
+  window.addEventListener("pagehide", destroy, { once: true });
+})();
+</script>
+<script id="codex-visualization-lucide-initialization">(() => {
+  const initialize = () => {
+    globalThis.lucide?.createIcons({ attrs: { width: 16, height: 16 } });
+  };
+  if (globalThis.lucide != null) {
+    initialize();
+    return;
+  }
+  document
+    .getElementById("codex-visualization-lucide")
+    ?.addEventListener("load", initialize, { once: true });
+})();
+</script>
+</body>
+</html>

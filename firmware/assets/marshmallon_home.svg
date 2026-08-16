@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="104" height="114" viewBox="120 58 104 114" shape-rendering="geometricPrecision">
+  <defs>
+    <radialGradient id="marsh-body" cx="38%" cy="34%" r="78%">
+      <stop offset="0" stop-color="#fffdf7"/>
+      <stop offset="0.55" stop-color="#fffaf7"/>
+      <stop offset="1" stop-color="#efbfd0"/>
+    </radialGradient>
+  </defs>
+  <path d="M169 62C156 62 148 69 145 79C141 88 141 96 137 103C133 112 124 122 124 134C124 147 131 157 144 165C156 171 181 171 197 165C212 160 220 148 220 134C220 122 215 115 210 107C205 99 201 91 199 82C197 69 185 62 169 62Z" fill="url(#marsh-body)" stroke="#261a16" stroke-width="1.4"/>
+  <path d="M151 74Q168 62 184 73" fill="none" stroke="#261a16" stroke-width="1.4" stroke-linecap="round"/>
+  <circle cx="151" cy="74" r="1.8" fill="#261a16"/>
+  <circle cx="184" cy="73" r="1.8" fill="#261a16"/>
+  <ellipse cx="160.5" cy="82.5" rx="3.9" ry="6.2" fill="#171311"/>
+  <ellipse cx="172.5" cy="82.5" rx="4.1" ry="6.2" fill="#171311"/>
+  <ellipse cx="159.7" cy="79.5" rx="1.15" ry="2" fill="#fffdf7"/>
+  <ellipse cx="171.7" cy="79.5" rx="1.15" ry="2" fill="#fffdf7"/>
+  <ellipse cx="149" cy="90.3" rx="4.7" ry="5.5" fill="#e7a1b8" opacity=".9"/>
+  <ellipse cx="186.7" cy="90.2" rx="5.8" ry="6.2" fill="#e7a1b8" opacity=".9"/>
+</svg>

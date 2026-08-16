@@ -1,0 +1,320 @@
+<div id="duel-pet-mock" class="dp-wrap">
+  <div class="dp-stage" aria-label="Interactive 240 by 240 pixel battle-pet life counter mockup">
+    <div class="dp-device">
+      <svg class="dp-screen" viewBox="0 0 240 240" role="img" aria-labelledby="dp-title dp-desc" shape-rendering="crispEdges">
+        <title id="dp-title">Ben's Marshmallon battle-pet life counter</title>
+        <desc id="dp-desc">Tap either duelist on the main screen, choose loss or gain, enter any amount, and apply it. Marshmallon reacts to the life-point swing.</desc>
+        <defs>
+          <filter id="dp-glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="3" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <radialGradient id="marsh-body" cx="38%" cy="34%" r="78%">
+            <stop offset="0" stop-color="#fffdf7"/>
+            <stop offset="0.55" stop-color="#fffaf7"/>
+            <stop offset="1" stop-color="#efbfd0"/>
+          </radialGradient>
+          <linearGradient id="card-rim" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#9a5335"/>
+            <stop offset="0.45" stop-color="#b56e45"/>
+            <stop offset="1" stop-color="#7f3c2c"/>
+          </linearGradient>
+          <radialGradient id="art-glow" cx="64%" cy="35%" r="76%">
+            <stop offset="0" stop-color="#fffbd4"/>
+            <stop offset="0.5" stop-color="#f8e89a"/>
+            <stop offset="1" stop-color="#efbe71"/>
+          </radialGradient>
+        </defs>
+
+        <g id="home-screen">
+          <rect width="240" height="240" rx="18" fill="url(#card-rim)"/>
+          <rect x="7" y="7" width="226" height="28" rx="2" fill="#d59a6d" stroke="#3a2117"/>
+          <text x="13" y="27" fill="#1c120d" font-family="Georgia, 'Times New Roman', serif" font-size="13.5" font-weight="500" letter-spacing=".2">BEN'S MARSHMALLON</text>
+          <circle cx="218" cy="21" r="10" fill="#f3df84" stroke="#2b1b12" stroke-width="1"/>
+          <text x="218" y="25" text-anchor="middle" fill="#24170f" font-family="Georgia, serif" font-size="10">光</text>
+          <g font-family="Georgia, serif" font-size="8" text-anchor="middle">
+            <circle cx="181" cy="44" r="7" fill="#ef5d24" stroke="#8a2e18"/>
+            <circle cx="199" cy="44" r="7" fill="#ef5d24" stroke="#8a2e18"/>
+            <circle cx="217" cy="44" r="7" fill="#ef5d24" stroke="#8a2e18"/>
+            <text x="181" y="47" fill="#ffd43d">★</text>
+            <text x="199" y="47" fill="#ffd43d">★</text>
+            <text x="217" y="47" fill="#ffd43d">★</text>
+          </g>
+          <rect x="7" y="53" width="226" height="127" rx="2" fill="#33251d"/>
+          <rect x="11" y="57" width="218" height="119" fill="url(#art-glow)"/>
+
+          <g id="select-p2" class="tap-target" role="button" aria-label="Change rival life points">
+            <rect x="14" y="61" width="96" height="43" rx="5" fill="#fff5d9" stroke="#5b3826" stroke-width="1.5"/>
+            <text x="22" y="76" fill="#60483b" font-family="ui-monospace, monospace" font-size="8" font-weight="500" letter-spacing="1">PLAYER 2</text>
+            <text id="p2-lp" x="21" y="98" fill="#20130d" font-family="Georgia, 'Times New Roman', serif" font-size="25" font-weight="500">8000</text>
+            <text x="102" y="89" text-anchor="end" fill="#5b3826" font-family="Georgia, serif" font-size="16">›</text>
+          </g>
+
+          <g id="pet" class="pet-idle" shape-rendering="geometricPrecision">
+            <path d="M169 62C156 62 148 69 145 79C141 88 141 96 137 103C133 112 124 122 124 134C124 147 131 157 144 165C156 171 181 171 197 165C212 160 220 148 220 134C220 122 215 115 210 107C205 99 201 91 199 82C197 69 185 62 169 62Z" fill="url(#marsh-body)" stroke="#261a16" stroke-width="1.4"/>
+            <path d="M151 74Q168 62 184 73" fill="none" stroke="#261a16" stroke-width="1.4" stroke-linecap="round"/>
+            <circle cx="151" cy="74" r="1.8" fill="#261a16"/>
+            <circle cx="184" cy="73" r="1.8" fill="#261a16"/>
+            <ellipse cx="160.5" cy="82.5" rx="3.9" ry="6.2" fill="#171311"/>
+            <ellipse cx="172.5" cy="82.5" rx="4.1" ry="6.2" fill="#171311"/>
+            <ellipse cx="159.7" cy="79.5" rx="1.15" ry="2" fill="#fffdf7"/>
+            <ellipse cx="171.7" cy="79.5" rx="1.15" ry="2" fill="#fffdf7"/>
+            <ellipse cx="149" cy="90.3" rx="4.7" ry="5.5" fill="#e7a1b8" opacity=".9"/>
+            <ellipse cx="186.7" cy="90.2" rx="5.8" ry="6.2" fill="#e7a1b8" opacity=".9"/>
+          </g>
+          <text id="pet-status" x="166" y="173" text-anchor="middle" fill="#4a2d20" font-family="Georgia, serif" font-size="7" font-weight="500" letter-spacing="1"></text>
+          <g id="reaction" opacity="0">
+            <path id="reaction-burst" d="M158 94L163 102L173 98L170 108L180 112L170 118L176 127L165 125L162 135L155 126L146 132L148 121L137 119L147 112L141 103L152 105Z" fill="#d9422e"/>
+            <text id="reaction-text" x="159" y="117" text-anchor="middle" fill="#fff8df" font-family="ui-monospace, monospace" font-size="9" font-weight="500">-2400</text>
+          </g>
+
+          <g id="select-p1" class="tap-target" role="button" aria-label="Change Ben's life points">
+            <rect x="14" y="128" width="96" height="43" rx="5" fill="#fff5d9" stroke="#5b3826" stroke-width="1.5"/>
+            <text x="22" y="143" fill="#60483b" font-family="ui-monospace, monospace" font-size="8" font-weight="500" letter-spacing="1">BEN · P1</text>
+            <text id="p1-lp" x="21" y="165" fill="#20130d" font-family="Georgia, 'Times New Roman', serif" font-size="25" font-weight="500">8000</text>
+            <text x="102" y="156" text-anchor="end" fill="#5b3826" font-family="Georgia, serif" font-size="16">›</text>
+          </g>
+          <rect x="7" y="184" width="226" height="49" rx="2" fill="#f2ddbd" stroke="#4b2b1d"/>
+          <text x="12" y="197" fill="#21150f" font-family="Georgia, 'Times New Roman', serif" font-size="8" font-weight="500">【FAIRY / EFFECT】</text>
+          <text x="12" y="209" fill="#5d493d" font-family="Georgia, 'Times New Roman', serif" font-size="6.5">Tap a duelist to change Life Points.</text>
+          <line x1="12" y1="216" x2="228" y2="216" stroke="#6a4633"/>
+          <text x="225" y="228" text-anchor="end" fill="#21150f" font-family="Georgia, 'Times New Roman', serif" font-size="8" font-weight="500">ATK / 300   DEF / 500</text>
+        </g>
+
+        <g id="amount-screen" display="none">
+          <rect width="240" height="240" rx="18" fill="url(#card-rim)"/>
+          <rect x="5" y="4" width="230" height="27" rx="5" fill="#d59a6d" stroke="#3a2117"/>
+          <g id="back" class="tap-target" role="button" aria-label="Return to duel">
+            <rect x="4" y="3" width="42" height="23" rx="7" fill="transparent"/>
+            <text x="12" y="19" fill="#20130d" font-family="ui-monospace, monospace" font-size="11">‹</text>
+          </g>
+          <text id="edit-player" x="120" y="21" text-anchor="middle" fill="#20130d" font-family="Georgia, 'Times New Roman', serif" font-size="11" font-weight="500">BEN · 8000 LP</text>
+
+          <g id="sign-loss" class="tap-target" role="button" aria-label="Subtract life points">
+            <rect id="loss-bg" x="8" y="36" width="53" height="31" rx="8" fill="#6e3425"/>
+            <text id="loss-text" x="34" y="56" text-anchor="middle" fill="#fff5d9" font-family="ui-monospace, monospace" font-size="10">− LOSS</text>
+          </g>
+          <g id="sign-gain" class="tap-target" role="button" aria-label="Add life points">
+            <rect id="gain-bg" x="65" y="36" width="53" height="31" rx="8" fill="#fff5d9" stroke="#5b3826"/>
+            <text id="gain-text" x="91" y="56" text-anchor="middle" fill="#60483b" font-family="ui-monospace, monospace" font-size="10">+ GAIN</text>
+          </g>
+          <rect x="124" y="36" width="108" height="31" rx="8" fill="#fff5d9" stroke="#5b3826"/>
+          <text id="amount-value" x="222" y="58" text-anchor="end" fill="#20130d" font-family="ui-monospace, monospace" font-size="20" font-weight="500">0</text>
+
+          <g id="keypad" font-family="ui-monospace, monospace" font-size="14" text-anchor="middle">
+            <g class="key tap-target" data-key="1"><rect x="8" y="77" width="47" height="34" rx="7"/><text x="31.5" y="99">1</text></g>
+            <g class="key tap-target" data-key="2"><rect x="62" y="77" width="47" height="34" rx="7"/><text x="85.5" y="99">2</text></g>
+            <g class="key tap-target" data-key="3"><rect x="116" y="77" width="47" height="34" rx="7"/><text x="139.5" y="99">3</text></g>
+            <g class="key tap-target" data-key="4"><rect x="8" y="117" width="47" height="34" rx="7"/><text x="31.5" y="139">4</text></g>
+            <g class="key tap-target" data-key="5"><rect x="62" y="117" width="47" height="34" rx="7"/><text x="85.5" y="139">5</text></g>
+            <g class="key tap-target" data-key="6"><rect x="116" y="117" width="47" height="34" rx="7"/><text x="139.5" y="139">6</text></g>
+            <g class="key tap-target" data-key="7"><rect x="8" y="157" width="47" height="34" rx="7"/><text x="31.5" y="179">7</text></g>
+            <g class="key tap-target" data-key="8"><rect x="62" y="157" width="47" height="34" rx="7"/><text x="85.5" y="179">8</text></g>
+            <g class="key tap-target" data-key="9"><rect x="116" y="157" width="47" height="34" rx="7"/><text x="139.5" y="179">9</text></g>
+            <g class="key tap-target" data-key="00"><rect x="8" y="197" width="47" height="34" rx="7"/><text x="31.5" y="219">00</text></g>
+            <g class="key tap-target" data-key="0"><rect x="62" y="197" width="47" height="34" rx="7"/><text x="85.5" y="219">0</text></g>
+            <g id="delete" class="key tap-target"><rect x="116" y="197" width="47" height="34" rx="7"/><text x="139.5" y="219">⌫</text></g>
+          </g>
+          <g id="clear" class="utility-key tap-target" role="button" aria-label="Clear amount">
+            <rect x="170" y="77" width="62" height="46" rx="8"/>
+            <text x="201" y="104" text-anchor="middle">CLEAR</text>
+          </g>
+          <g id="apply" class="apply-key tap-target" role="button" aria-label="Apply life point change">
+            <rect x="170" y="130" width="62" height="101" rx="8"/>
+            <text x="201" y="174" text-anchor="middle">APPLY</text>
+            <text id="apply-sign" x="201" y="195" text-anchor="middle">−0</text>
+          </g>
+        </g>
+
+        <g id="game-over-screen" display="none" style="--foreground:#261a16;--card:#fffdf7;--red:#d86f8f;--viz-series-1:#ef5d24;--viz-series-2:#f0bd36;--viz-series-3:#d968a0;--card-foreground:#20130d">
+          <rect width="240" height="240" rx="18" fill="url(#card-rim)"/>
+          <rect x="7" y="35" width="226" height="157" rx="2" fill="#33251d"/>
+          <rect x="11" y="39" width="218" height="149" fill="url(#art-glow)"/>
+          <g id="confetti" aria-hidden="true">
+            <rect x="24" y="28" width="5" height="11" fill="var(--viz-series-1)" transform="rotate(-24 26 33)"/>
+            <rect x="52" y="15" width="5" height="9" fill="var(--viz-series-2)" transform="rotate(31 54 19)"/>
+            <rect x="83" y="31" width="5" height="10" fill="var(--viz-series-3)" transform="rotate(-14 85 36)"/>
+            <rect x="151" y="19" width="5" height="11" fill="var(--viz-series-2)" transform="rotate(21 153 24)"/>
+            <rect x="181" y="34" width="5" height="9" fill="var(--viz-series-3)" transform="rotate(-35 183 38)"/>
+            <rect x="211" y="18" width="5" height="11" fill="var(--viz-series-1)" transform="rotate(16 213 23)"/>
+          </g>
+          <text x="12" y="24" fill="#20130d" font-family="Georgia, 'Times New Roman', serif" font-size="14" font-weight="500" letter-spacing=".4">GAME OVER</text>
+          <text id="winner-name" x="120" y="57" text-anchor="middle" fill="#20130d" font-family="Georgia, 'Times New Roman', serif" font-size="18" font-weight="500">BEN WINS!</text>
+          <g id="game-over-pet">
+            <g shape-rendering="geometricPrecision">
+              <path id="crown" d="M99 78L104 65L112 75L118 60L125 75L133 65L137 78Z" fill="var(--viz-series-2)" stroke="var(--foreground)" stroke-width="1.2"/>
+              <rect x="100" y="77" width="36" height="6" rx="2" fill="var(--viz-series-2)" stroke="var(--foreground)" stroke-width="1.2"/>
+              <path id="final-pet-body" d="M117 82C106 82 99 88 96 97C93 106 93 112 90 119C86 126 78 135 78 146C78 157 84 166 95 172C106 178 128 178 142 172C156 167 163 157 163 145C163 135 158 128 154 121C150 114 147 107 145 99C143 88 132 82 117 82Z" fill="url(#marsh-body)" stroke="#261a16" stroke-width="1.5"/>
+              <path id="final-mouth" d="M101 93Q116 82 131 92" fill="none" stroke="#261a16" stroke-width="1.5" stroke-linecap="round"/>
+              <circle cx="101" cy="93" r="1.9" fill="#261a16"/>
+              <circle cx="131" cy="92" r="1.9" fill="#261a16"/>
+              <ellipse cx="109" cy="101" rx="3.8" ry="6.4" fill="#171311"/>
+              <ellipse cx="120" cy="101" rx="4" ry="6.4" fill="#171311"/>
+              <ellipse cx="108.4" cy="98" rx="1.1" ry="2" fill="#fffdf7"/>
+              <ellipse cx="119.4" cy="98" rx="1.1" ry="2" fill="#fffdf7"/>
+              <ellipse cx="99" cy="108" rx="4.5" ry="5.5" fill="#e7a1b8" opacity=".9"/>
+              <ellipse cx="133" cy="108" rx="5.3" ry="5.8" fill="#e7a1b8" opacity=".9"/>
+            </g>
+          </g>
+          <text id="final-score" x="120" y="185" text-anchor="middle" fill="#20130d" font-family="Georgia, 'Times New Roman', serif" font-size="10" font-weight="500">1200 — 0</text>
+          <g id="new-game" class="new-game-key tap-target" role="button" aria-label="Start a new game">
+            <rect x="50" y="200" width="140" height="31" rx="9"/>
+            <text x="120" y="220" text-anchor="middle">NEW GAME?</text>
+          </g>
+        </g>
+      </svg>
+    </div>
+  </div>
+  <p class="dp-hint">Tap Player 1 or Player 2, then enter any life-point change.</p>
+</div>
+
+<style>
+  #duel-pet-mock.dp-wrap { display: grid; justify-items: center; gap: 12px; padding: 8px 0; color: var(--foreground); }
+  #duel-pet-mock .dp-stage { width: min(100%, 520px); display: grid; place-items: center; padding: 26px; border-radius: 28px; background: color-mix(in srgb, var(--muted) 34%, transparent); }
+  #duel-pet-mock .dp-device { width: min(100%, 420px); aspect-ratio: 1; display: grid; place-items: center; padding: 24px; border-radius: 38px; background: #17191c; box-shadow: 0 20px 42px rgb(0 0 0 / 24%), inset 0 0 0 3px #4d5155; }
+  #duel-pet-mock .dp-screen { width: 100%; height: 100%; border-radius: 18px; overflow: hidden; image-rendering: pixelated; touch-action: manipulation; }
+  #duel-pet-mock .tap-target { cursor: pointer; }
+  #duel-pet-mock .key rect, #duel-pet-mock .utility-key rect { fill: #fff5d9; stroke: #5b3826; }
+  #duel-pet-mock .key text, #duel-pet-mock .utility-key text { fill: #20130d; font-family: ui-monospace, monospace; font-size: 10px; }
+  #duel-pet-mock .apply-key rect { fill: #6e3425; }
+  #duel-pet-mock .apply-key text { fill: #fff5d9; font-family: ui-monospace, monospace; font-size: 10px; font-weight: 500; }
+  #duel-pet-mock .new-game-key rect { fill: #6e3425; }
+  #duel-pet-mock .new-game-key text { fill: #fff5d9; font-family: ui-monospace, monospace; font-size: 11px; font-weight: 500; letter-spacing: 1px; }
+  #duel-pet-mock .tap-target:active { opacity: .72; }
+  #duel-pet-mock .dp-hint { margin: 0; color: var(--muted-foreground); text-align: center; }
+  #duel-pet-mock #pet { transform-origin: 172px 126px; animation: dp-breathe 1.8s steps(2, end) infinite; }
+  #duel-pet-mock.react-hit #pet { animation: dp-hit .52s steps(4, end) 1; }
+  #duel-pet-mock.react-hit #reaction { animation: dp-burst .82s steps(2, end) 1; }
+  #duel-pet-mock.react-celebrate #pet { animation: dp-celebrate .72s steps(4, end) 1; filter: drop-shadow(0 0 5px #f2b72f); }
+  #duel-pet-mock.react-celebrate #reaction { animation: dp-burst .82s steps(2, end) 1; }
+  #duel-pet-mock.react-concern #pet { animation: dp-concern .72s steps(3, end) 1; }
+  #duel-pet-mock.react-concern #reaction { animation: dp-burst .82s steps(2, end) 1; }
+  #duel-pet-mock.react-heal #pet { animation: dp-heal .8s steps(4, end) 1; filter: url(#dp-glow); }
+  #duel-pet-mock.game-won #game-over-pet { transform-origin: 120px 136px; animation: dp-victory .75s steps(4, end) infinite; }
+  #duel-pet-mock.game-won #confetti { animation: dp-confetti 1.4s steps(5, end) infinite; }
+  #duel-pet-mock.game-lost #game-over-pet { transform-origin: 120px 160px; animation: dp-defeat 1.2s steps(3, end) infinite; }
+  #duel-pet-mock.game-lost #crown { display: none; }
+  #duel-pet-mock.game-lost #confetti { display: none; }
+  @keyframes dp-breathe { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-2px) scale(1.02); } }
+  @keyframes dp-hit { 0% { transform: translateX(0) rotate(0); } 25% { transform: translateX(-12px) rotate(-8deg); } 50% { transform: translateX(10px) rotate(7deg); } 75% { transform: translateX(-5px) rotate(-3deg); } 100% { transform: translateX(0) rotate(0); } }
+  @keyframes dp-celebrate { 0%,100% { transform: translateY(0) scale(1); } 30% { transform: translateY(-12px) scale(1.07) rotate(-4deg); } 60% { transform: translateY(-5px) scale(1.04) rotate(4deg); } }
+  @keyframes dp-concern { 0%,100% { transform: translateY(0) scale(1); } 35% { transform: translateY(5px) scale(.92) rotate(-3deg); } 70% { transform: translateY(3px) scale(.95) rotate(3deg); } }
+  @keyframes dp-burst { 0% { opacity: 0; transform: scale(.3); transform-origin: 159px 114px; } 30%,70% { opacity: 1; transform: scale(1); transform-origin: 159px 114px; } 100% { opacity: 0; transform: scale(1.15); transform-origin: 159px 114px; } }
+  @keyframes dp-heal { 0%,100% { transform: translateY(0) scale(1); } 40% { transform: translateY(-8px) scale(1.12); } }
+  @keyframes dp-victory { 0%,100% { transform: translateY(0) rotate(-3deg); } 50% { transform: translateY(-9px) rotate(3deg); } }
+  @keyframes dp-confetti { 0% { transform: translateY(-12px); opacity: 0; } 25% { opacity: 1; } 100% { transform: translateY(36px); opacity: 0; } }
+  @keyframes dp-defeat { 0%,100% { transform: translateY(5px) scaleY(.92); } 50% { transform: translateY(8px) scaleY(.86); } }
+  @media (max-width: 480px) { #duel-pet-mock .dp-stage { padding: 18px; } #duel-pet-mock .dp-device { padding: 18px; border-radius: 30px; } }
+</style>
+
+<script>
+(() => {
+  const root = document.getElementById('duel-pet-mock');
+  const home = root.querySelector('#home-screen');
+  const amountScreen = root.querySelector('#amount-screen');
+  const gameOverScreen = root.querySelector('#game-over-screen');
+  const values = { p1: 8000, p2: 8000 };
+  let selected = 'p1';
+  let mode = 'loss';
+  let amount = '';
+
+  const formatAmount = () => amount === '' ? '0' : String(Number(amount));
+  const selectedName = () => selected === 'p1' ? 'BEN' : 'PLAYER 2';
+  const updateAmountScreen = () => {
+    root.querySelector('#edit-player').textContent = selectedName() + ' · ' + values[selected] + ' LP';
+    root.querySelector('#amount-value').textContent = formatAmount();
+    root.querySelector('#apply-sign').textContent = (mode === 'loss' ? '−' : '+') + formatAmount();
+    const loss = mode === 'loss';
+    root.querySelector('#loss-bg').setAttribute('fill', loss ? '#6e3425' : '#fff5d9');
+    root.querySelector('#loss-bg').setAttribute('stroke', loss ? 'none' : '#5b3826');
+    root.querySelector('#loss-text').setAttribute('fill', loss ? '#fff5d9' : '#60483b');
+    root.querySelector('#gain-bg').setAttribute('fill', loss ? '#fff5d9' : '#6e3425');
+    root.querySelector('#gain-bg').setAttribute('stroke', loss ? '#5b3826' : 'none');
+    root.querySelector('#gain-text').setAttribute('fill', loss ? '#60483b' : '#fff5d9');
+  };
+  const showAmount = (player) => {
+    selected = player;
+    amount = '';
+    mode = 'loss';
+    home.setAttribute('display', 'none');
+    amountScreen.removeAttribute('display');
+    updateAmountScreen();
+  };
+  const showHome = () => {
+    amountScreen.setAttribute('display', 'none');
+    gameOverScreen.setAttribute('display', 'none');
+    home.removeAttribute('display');
+  };
+  const showGameOver = () => {
+    home.setAttribute('display', 'none');
+    amountScreen.setAttribute('display', 'none');
+    gameOverScreen.removeAttribute('display');
+    const benWon = values.p2 === 0;
+    root.classList.remove('react-hit', 'react-celebrate', 'react-concern', 'react-heal', 'game-won', 'game-lost');
+    root.classList.add(benWon ? 'game-won' : 'game-lost');
+    root.querySelector('#winner-name').textContent = benWon ? 'BEN WINS!' : 'PLAYER 2 WINS';
+    root.querySelector('#final-score').textContent = values.p1 + ' — ' + values.p2;
+    root.querySelector('#final-mouth').setAttribute('d', 'M101 93Q116 82 131 92');
+  };
+  const applyChange = () => {
+    const delta = Number(formatAmount());
+    if (!delta) return;
+    values[selected] = mode === 'loss' ? Math.max(0, values[selected] - delta) : values[selected] + delta;
+    root.querySelector('#p1-lp').textContent = String(values.p1);
+    root.querySelector('#p2-lp').textContent = String(values.p2);
+    const opponentHit = mode === 'loss' && selected === 'p2';
+    const benHit = mode === 'loss' && selected === 'p1';
+    const benGain = mode === 'gain' && selected === 'p1';
+    const opponentGain = mode === 'gain' && selected === 'p2';
+    root.querySelector('#reaction-text').textContent = (mode === 'loss' ? '−' : '+') + delta;
+    root.querySelector('#reaction-burst').setAttribute('fill', opponentHit ? '#f0a82f' : benGain ? '#54a95f' : '#d9422e');
+    if (opponentHit) {
+      root.querySelector('#pet-status').textContent = delta >= 2000 ? 'HUGE HIT!' : 'NICE HIT!';
+    } else if (benHit) {
+      root.querySelector('#pet-status').textContent = delta >= 2000 ? 'OH NO, BEN!' : 'BEN!';
+    } else if (selected === 'p1') {
+      root.querySelector('#pet-status').textContent = 'FEELING BETTER!';
+    } else {
+      root.querySelector('#pet-status').textContent = 'UH-OH...';
+    }
+    root.classList.remove('react-hit', 'react-celebrate', 'react-concern', 'react-heal');
+    void root.offsetWidth;
+    root.classList.add(opponentHit || benGain ? 'react-celebrate' : benHit ? 'react-hit' : opponentGain ? 'react-concern' : 'react-heal');
+    showHome();
+    if (values[selected] === 0) {
+      setTimeout(showGameOver, 850);
+    } else {
+      setTimeout(() => {
+        root.classList.remove('react-hit', 'react-celebrate', 'react-concern', 'react-heal');
+        root.querySelector('#pet-status').textContent = '';
+      }, 900);
+    }
+  };
+  const newGame = () => {
+    values.p1 = 8000;
+    values.p2 = 8000;
+    root.querySelector('#p1-lp').textContent = '8000';
+    root.querySelector('#p2-lp').textContent = '8000';
+    root.querySelector('#pet-status').textContent = '';
+    root.classList.remove('game-won', 'game-lost', 'react-hit', 'react-celebrate', 'react-concern', 'react-heal');
+    showHome();
+  };
+
+  root.querySelector('#select-p1').addEventListener('click', () => showAmount('p1'));
+  root.querySelector('#select-p2').addEventListener('click', () => showAmount('p2'));
+  root.querySelector('#back').addEventListener('click', showHome);
+  root.querySelector('#sign-loss').addEventListener('click', () => { mode = 'loss'; updateAmountScreen(); });
+  root.querySelector('#sign-gain').addEventListener('click', () => { mode = 'gain'; updateAmountScreen(); });
+  root.querySelectorAll('[data-key]').forEach((key) => {
+    key.addEventListener('click', () => {
+      if (amount.length >= 5) return;
+      amount = (amount + key.dataset.key).replace(/^0+(?=\d)/, '');
+      updateAmountScreen();
+    });
+  });
+  root.querySelector('#delete').addEventListener('click', () => { amount = amount.slice(0, -1); updateAmountScreen(); });
+  root.querySelector('#clear').addEventListener('click', () => { amount = ''; updateAmountScreen(); });
+  root.querySelector('#apply').addEventListener('click', applyChange);
+  root.querySelector('#new-game').addEventListener('click', newGame);
+})();
+</script>

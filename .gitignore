@@ -1,0 +1,5 @@
+firmware/build/
+firmware/managed_components/
+firmware/sdkconfig
+backups/
+.DS_Store
