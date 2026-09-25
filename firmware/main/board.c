@@ -186,3 +186,8 @@ esp_err_t board_display_off(void)
     }
     return ESP_OK;
 }
+
+i2c_master_bus_handle_t board_i2c_bus(void)
+{
+    return s_i2c_bus;
+}
