@@ -8,6 +8,7 @@
 
 #include "esp_log.h"
 #include "esp_random.h"
+#include "audio.h"
 #include "lvgl.h"
 #include "marshmallon_assets.h"
 
@@ -469,6 +470,7 @@ static void set_pet_wiggle(void *object, int32_t progress)
 
 static void pet_clicked(lv_event_t *event)
 {
+    audio_play_jiggle();
     lv_obj_t *pet = lv_event_get_current_target(event);
     lv_anim_delete(pet, set_pet_wiggle);
 

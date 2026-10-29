@@ -7,6 +7,8 @@ Native ESP-IDF/LVGL firmware for the Waveshare ESP32-S3-Touch-LCD-1.54 (SKU 3386
 - Two-player Life Point counter with headerless adjustment screens, full-width actions, swipe-back navigation, and separated loss/gain choices
 - Marshmallon reactions, game-over screen, and new-game reset
 - Tap-to-wiggle Marshmallon interaction
+- Cartoon gelatin jiggle through the board's ES8311 speaker when Marshmallon is tapped
+- Rapid taps restart the jiggle sound with a short fade so playback follows each new wiggle
 - Contextual side buttons: Player 2/Ben selection, then left=gain and right=lose; hold-center powers off
 - Optional animated duel-coin flip hosted by Marshmallon at boot and after New Game (left=flip, right=skip)
 - Explicit Start Duel action plus a three-second safety auto-advance after coin results
@@ -35,6 +37,8 @@ idf.py build
 The component manager resolves and locks LVGL, `esp_lvgl_port`, and the CST816S driver from `main/idf_component.yml` and `dependencies.lock`.
 
 The source-of-truth character vectors are in `assets/marshmallon_*.svg`. Run `python3 tools/generate_marshmallon_assets.py` after changing them to regenerate the transparent PNG previews and LVGL ARGB8888 image data.
+
+The jiggle sample is `assets/jiggle.pcm` (22,050 Hz, 16-bit mono). Run `python3 tools/generate_jello_jiggle.py` to regenerate it and the preview `assets/jiggle.wav`. The firmware duplicates the sample into stereo and sends it by I2S DMA to the ES8311. Audio uses MCLK/BCLK/WS/DOUT on GPIO 8/9/10/12 and speaker amplifier enable on GPIO 7; the codec shares the touchscreen's I2C bus on GPIO 41/42.
 
 ## Flash
 

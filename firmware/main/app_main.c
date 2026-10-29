@@ -1,4 +1,5 @@
 #include "battery.h"
+#include "audio.h"
 #include "board.h"
 #include "game_state.h"
 #include "ui.h"
@@ -180,6 +181,11 @@ void app_main(void)
     lv_display_t *display = NULL;
     ESP_ERROR_CHECK(board_init(&display));
     (void)display;
+
+    esp_err_t audio_result = audio_init(board_i2c_bus());
+    if (audio_result != ESP_OK) {
+        ESP_LOGW(TAG, "Jiggle audio unavailable: %s", esp_err_to_name(audio_result));
+    }
 
     lvgl_port_lock(0);
     ui_create(state, &battery);
