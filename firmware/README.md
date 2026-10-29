@@ -57,4 +57,4 @@ idf.py -p /dev/cu.usbmodem101 flash monitor
 
 Exit the monitor with `Ctrl-]`.
 
-The backup can contain saved Wi-Fi credentials or other private configuration from the previous firmware. Keep it local; the package `.gitignore` excludes `backups/`.
+Keep flash backups local; the package `.gitignore` excludes `backups/`.
