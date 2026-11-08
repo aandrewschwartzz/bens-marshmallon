@@ -57,6 +57,14 @@ static change_mode_t s_mode = CHANGE_LOSS;
 static char s_amount[6];
 
 static lv_obj_t *s_home;
+static lv_obj_t *s_mtg_home;
+static lv_obj_t *s_mtg_rows[2];
+static lv_obj_t *s_mtg_points[2];
+static lv_obj_t *s_mtg_changes[2];
+static lv_obj_t *s_mtg_selected_hint;
+static int32_t s_mtg_delta[2];
+static lv_timer_t *s_mtg_feedback_timer[2];
+static lv_timer_t *s_mtg_audio_timer;
 static lv_obj_t *s_mode_screen;
 static lv_obj_t *s_amount_screen;
 static lv_obj_t *s_review_screen;
@@ -204,6 +212,7 @@ static lv_obj_t *make_image(lv_obj_t *parent, const lv_image_dsc_t *source, int 
 static void show_only(lv_obj_t *screen)
 {
     lv_obj_add_flag(s_home, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(s_mtg_home, LV_OBJ_FLAG_HIDDEN);
     lv_obj_add_flag(s_mode_screen, LV_OBJ_FLAG_HIDDEN);
     lv_obj_add_flag(s_amount_screen, LV_OBJ_FLAG_HIDDEN);
     lv_obj_add_flag(s_review_screen, LV_OBJ_FLAG_HIDDEN);
@@ -216,6 +225,8 @@ static void refresh_life_labels(void)
 {
     lv_label_set_text_fmt(s_p1_lp, "%lu", (unsigned long)s_state.p1);
     lv_label_set_text_fmt(s_p2_lp, "%lu", (unsigned long)s_state.p2);
+    lv_label_set_text_fmt(s_mtg_points[PLAYER_BEN], "%lu", (unsigned long)s_state.p1);
+    lv_label_set_text_fmt(s_mtg_points[PLAYER_TWO], "%lu", (unsigned long)s_state.p2);
 }
 
 static const char *selected_name(void)
@@ -226,6 +237,99 @@ static const char *selected_name(void)
 static uint32_t *selected_points(void)
 {
     return s_selected == PLAYER_BEN ? &s_state.p1 : &s_state.p2;
+}
+
+static void select_mtg_player(player_t player)
+{
+    s_selected = player;
+    for (int i = 0; i < 2; ++i) {
+        lv_obj_set_style_border_color(s_mtg_rows[i], color(i == player ? 0x82E3F4 : 0x456682), 0);
+        lv_obj_set_style_border_width(s_mtg_rows[i], i == player ? 2 : 1, 0);
+    }
+    lv_label_set_text_fmt(s_mtg_selected_hint, "%s / SIDES - +", selected_name());
+}
+
+static void clear_mtg_delta(lv_timer_t *timer)
+{
+    player_t player = (player_t)(intptr_t)lv_timer_get_user_data(timer);
+    s_mtg_feedback_timer[player] = NULL;
+    s_mtg_delta[player] = 0;
+    lv_label_set_text(s_mtg_changes[player], "");
+}
+
+static void play_mtg_change(lv_timer_t *timer)
+{
+    (void)timer;
+    s_mtg_audio_timer = NULL;
+    audio_play_lp_change();
+}
+
+static void reset_mtg_feedback(void)
+{
+    for (int i = 0; i < 2; ++i) {
+        if (s_mtg_feedback_timer[i]) {
+            lv_timer_delete(s_mtg_feedback_timer[i]);
+            s_mtg_feedback_timer[i] = NULL;
+        }
+        s_mtg_delta[i] = 0;
+        lv_label_set_text(s_mtg_changes[i], "");
+    }
+    if (s_mtg_audio_timer) {
+        lv_timer_delete(s_mtg_audio_timer);
+        s_mtg_audio_timer = NULL;
+    }
+}
+
+static void adjust_mtg_life(player_t player, change_mode_t mode)
+{
+    if (!ui_mtg_controls_active()) {
+        return;
+    }
+    select_mtg_player(player);
+    uint32_t *points = selected_points();
+    uint32_t before = *points;
+    if (mode == CHANGE_LOSS) {
+        if (*points > 0) --*points;
+    } else if (*points < MAX_LIFE_POINTS) {
+        ++*points;
+    }
+    if (*points == before) {
+        return;
+    }
+    refresh_life_labels();
+    game_state_save(&s_state);
+    s_mtg_delta[player] += (int32_t)*points - (int32_t)before;
+    lv_label_set_text_fmt(s_mtg_changes[player], "%+ld", (long)s_mtg_delta[player]);
+    lv_obj_set_style_text_color(s_mtg_changes[player],
+                                color(s_mtg_delta[player] < 0 ? 0xFFB5B5 : 0xA0F3C0), 0);
+    if (s_mtg_feedback_timer[player]) {
+        lv_timer_delete(s_mtg_feedback_timer[player]);
+    }
+    s_mtg_feedback_timer[player] = lv_timer_create(clear_mtg_delta, 1200, (void *)(intptr_t)player);
+    lv_timer_set_repeat_count(s_mtg_feedback_timer[player], 1);
+
+    /* One cue after a burst of taps or a hold, rather than restarting it at
+     * every repeated point. Totals and the cumulative change update at once. */
+    if (s_mtg_audio_timer) {
+        lv_timer_delete(s_mtg_audio_timer);
+    }
+    s_mtg_audio_timer = lv_timer_create(play_mtg_change, 300, NULL);
+    lv_timer_set_repeat_count(s_mtg_audio_timer, 1);
+}
+
+static void mtg_adjust_pressed(lv_event_t *event)
+{
+    lv_event_code_t code = lv_event_get_code(event);
+    if (code != LV_EVENT_PRESSED && code != LV_EVENT_LONG_PRESSED_REPEAT) {
+        return;
+    }
+    intptr_t action = (intptr_t)lv_event_get_user_data(event);
+    adjust_mtg_life((player_t)(action / 2), (change_mode_t)(action % 2));
+}
+
+static void mtg_player_clicked(lv_event_t *event)
+{
+    select_mtg_player((player_t)(intptr_t)lv_event_get_user_data(event));
 }
 
 static bool amount_is_actionable(void)
@@ -272,7 +376,7 @@ static void update_review_screen(void)
 
 static void show_home(void)
 {
-    show_only(s_home);
+    show_only(s_state.mode == GAME_MODE_MTG ? s_mtg_home : s_home);
 }
 
 static void set_coin_face(player_t player, bool mystery)
@@ -422,6 +526,8 @@ static void start_coin_flip(void)
 
 static void reset_game_and_offer_coin(void)
 {
+    reset_mtg_feedback();
+    select_mtg_player(PLAYER_BEN);
     game_state_reset(&s_state, s_state.mode);
     refresh_life_labels();
     game_state_save(&s_state);
@@ -430,6 +536,8 @@ static void reset_game_and_offer_coin(void)
 
 static void select_game_mode(game_mode_t mode)
 {
+    reset_mtg_feedback();
+    select_mtg_player(PLAYER_BEN);
     game_state_reset(&s_state, mode);
     refresh_life_labels();
     bool mtg = mode == GAME_MODE_MTG;
@@ -767,6 +875,56 @@ static void create_home_screen(lv_obj_t *root)
                               &lv_font_montserrat_10, COLOR_INK, LV_TEXT_ALIGN_RIGHT);
 }
 
+static void create_mtg_home_screen(lv_obj_t *root)
+{
+    s_mtg_home = make_box(root, 0, 0, 240, 240, 0x142B46, 0x142B46, 0, 0);
+    make_box(s_mtg_home, 7, 5, 226, 29, 0x28557E, 0x102B48, 1, 3);
+    make_label(s_mtg_home, "JACE BELEREN", 13, 12, 164,
+               &lv_font_montserrat_12, COLOR_CREAM, LV_TEXT_ALIGN_LEFT);
+
+    for (int i = 0; i < 2; ++i) {
+        player_t player = i == 0 ? PLAYER_TWO : PLAYER_BEN;
+        int y = 43 + i * 76;
+        s_mtg_rows[player] = make_box(s_mtg_home, 12, y, 216, 70,
+                                      0x254667, 0x456682, 1, 8);
+        lv_obj_t *minus = make_button(s_mtg_home, 18, y + 16, 48, 46,
+                                       0x99414A, 0xC36A72, 8, "-",
+                                       &lv_font_montserrat_24, COLOR_CREAM);
+        lv_obj_t *plus = make_button(s_mtg_home, 174, y + 16, 48, 46,
+                                      0x287558, 0x59B48E, 8, "+",
+                                      &lv_font_montserrat_24, COLOR_CREAM);
+        lv_obj_add_event_cb(minus, mtg_adjust_pressed, LV_EVENT_ALL,
+                            (void *)(intptr_t)(player * 2 + CHANGE_LOSS));
+        lv_obj_add_event_cb(plus, mtg_adjust_pressed, LV_EVENT_ALL,
+                            (void *)(intptr_t)(player * 2 + CHANGE_GAIN));
+
+        lv_obj_t *total = make_button(s_mtg_home, 72, y + 4, 96, 62,
+                                       0x254667, 0x254667, 0, "",
+                                       &lv_font_montserrat_24, COLOR_CREAM);
+        make_label(total, player == PLAYER_BEN ? "BEN / P1" : "PLAYER 2", 0, 1, 96,
+                   &lv_font_montserrat_10, 0xD1EAF6, LV_TEXT_ALIGN_CENTER);
+        s_mtg_points[player] = make_label(total, "20", 0, 15, 96,
+                                           &lv_font_montserrat_24, 0xFFFFFF, LV_TEXT_ALIGN_CENTER);
+        s_mtg_changes[player] = make_label(total, "", 0, 46, 96,
+                                            &lv_font_montserrat_10, 0xA0F3C0, LV_TEXT_ALIGN_CENTER);
+        lv_obj_add_event_cb(total, mtg_player_clicked, LV_EVENT_CLICKED, (void *)(intptr_t)player);
+    }
+
+    lv_obj_t *jace = make_image(s_mtg_home, &jace_home, -18, 156);
+    lv_image_set_pivot(jace, 52, 57);
+    lv_image_set_scale(jace, 104);
+    s_mtg_selected_hint = make_label(s_mtg_home, "BEN / SIDES - +", 64, 196, 110,
+                                      &lv_font_montserrat_10, 0xC9EEFA, LV_TEXT_ALIGN_LEFT);
+    make_label(s_mtg_home, "Tap total to select", 64, 210, 110,
+               &lv_font_montserrat_10, 0xC9EEFA, LV_TEXT_ALIGN_LEFT);
+    make_label(s_mtg_home, "Hold +/- for more", 64, 226, 162,
+               &lv_font_montserrat_10, 0x93B2CD, LV_TEXT_ALIGN_LEFT);
+    lv_obj_t *reset = make_button(s_mtg_home, 176, 196, 48, 30,
+                                   0x28557E, 0x567C9D, 5, "HOLD\nRESET",
+                                   &lv_font_montserrat_10, COLOR_CREAM);
+    lv_obj_add_event_cb(reset, new_game_clicked, LV_EVENT_LONG_PRESSED, NULL);
+}
+
 static void create_amount_screen(lv_obj_t *root)
 {
     s_amount_screen = make_box(root, 0, 0, 240, 240, COLOR_RIM, COLOR_RIM, 0, 0);
@@ -1038,6 +1196,11 @@ void ui_update_battery(const battery_status_t *battery)
     }
 }
 
+bool ui_mtg_controls_active(void)
+{
+    return s_state.mode == GAME_MODE_MTG && !lv_obj_has_flag(s_mtg_home, LV_OBJ_FLAG_HIDDEN);
+}
+
 void ui_handle_left_button(void)
 {
     if (!lv_obj_has_flag(s_mode_screen, LV_OBJ_FLAG_HIDDEN)) {
@@ -1050,6 +1213,10 @@ void ui_handle_left_button(void)
         } else if (s_coin_state == COIN_RESULT) {
             leave_coin_screen();
         }
+        return;
+    }
+    if (ui_mtg_controls_active()) {
+        adjust_mtg_life(s_selected, CHANGE_LOSS);
         return;
     }
     if (!lv_obj_has_flag(s_review_screen, LV_OBJ_FLAG_HIDDEN)) {
@@ -1074,6 +1241,10 @@ void ui_handle_right_button(void)
         }
         return;
     }
+    if (ui_mtg_controls_active()) {
+        adjust_mtg_life(s_selected, CHANGE_GAIN);
+        return;
+    }
     if (!lv_obj_has_flag(s_review_screen, LV_OBJ_FLAG_HIDDEN)) {
         apply_change(CHANGE_LOSS);
         return;
@@ -1090,6 +1261,7 @@ void ui_create(game_state_t initial_state, const battery_status_t *battery)
     lv_obj_set_style_bg_opa(root, LV_OPA_COVER, 0);
 
     create_home_screen(root);
+    create_mtg_home_screen(root);
     create_amount_screen(root);
     create_review_screen(root);
     create_game_over_screen(root);
