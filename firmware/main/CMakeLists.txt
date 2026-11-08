@@ -13,6 +13,7 @@ idf_component_register(
         "board.c"
         "game_state.c"
         "marshmallon_assets.c"
+        "jace_assets.c"
         "ui.c"
     INCLUDE_DIRS "."
     EMBED_FILES ${AUDIO_EMBED_FILES}

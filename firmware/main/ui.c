@@ -11,6 +11,7 @@
 #include "audio.h"
 #include "lvgl.h"
 #include "marshmallon_assets.h"
+#include "jace_assets.h"
 
 #define COLOR_RIM 0x9A5335
 #define COLOR_HEADER 0xD59A6D
@@ -65,6 +66,13 @@ static lv_obj_t *s_coin_screen;
 static lv_obj_t *s_p1_lp;
 static lv_obj_t *s_p2_lp;
 static lv_obj_t *s_home_format;
+static lv_obj_t *s_home_title;
+static lv_obj_t *s_home_header;
+static lv_obj_t *s_home_art;
+static lv_obj_t *s_home_footer;
+static lv_obj_t *s_game_over_title;
+static lv_obj_t *s_game_over_art;
+static lv_obj_t *s_coin_art;
 static lv_obj_t *s_home_hint;
 static lv_obj_t *s_home_stats;
 static lv_obj_t *s_pet;
@@ -272,7 +280,7 @@ static void set_coin_face(player_t player, bool mystery)
     if (mystery) {
         lv_obj_set_style_bg_color(s_coin_inner, color(0x6B2E74), 0);
         lv_label_set_text(s_coin_face, "?");
-        lv_label_set_text(s_coin_detail, s_state.mode == GAME_MODE_MTG ? "GAME COIN" : "DUEL COIN");
+        lv_label_set_text(s_coin_detail, "COIN");
         return;
     }
 
@@ -424,11 +432,30 @@ static void select_game_mode(game_mode_t mode)
 {
     game_state_reset(&s_state, mode);
     refresh_life_labels();
+    bool mtg = mode == GAME_MODE_MTG;
+    const uint32_t rim = mtg ? 0x142B46 : COLOR_RIM;
+    lv_obj_t *screens[] = {s_home, s_amount_screen, s_review_screen, s_game_over, s_coin_screen};
+    for (size_t i = 0; i < sizeof(screens) / sizeof(screens[0]); ++i) {
+        lv_obj_set_style_bg_color(screens[i], color(rim), 0);
+    }
+    lv_obj_set_style_bg_color(s_home_header, color(mtg ? 0x28557E : COLOR_HEADER), 0);
+    lv_obj_set_style_bg_color(s_home_art, color(mtg ? 0xC6E5EF : COLOR_ART), 0);
+    lv_obj_set_style_bg_color(s_game_over_art, color(mtg ? 0xC6E5EF : COLOR_ART), 0);
+    lv_obj_set_style_bg_color(s_coin_art, color(mtg ? 0xC6E5EF : 0xE8C77B), 0);
+    lv_obj_set_style_bg_color(s_home_footer, color(mtg ? 0xD8EAF2 : COLOR_FOOTER), 0);
+    lv_obj_set_style_text_color(s_home_title, color(mtg ? COLOR_CREAM : COLOR_INK), 0);
+    lv_obj_set_style_text_color(s_game_over_title, color(mtg ? COLOR_CREAM : COLOR_INK), 0);
+    lv_obj_set_style_text_color(s_coin_title, color(mtg ? COLOR_CREAM : COLOR_INK), 0);
+    lv_image_set_src(s_pet, mtg ? &jace_home : &marshmallon_home);
+    lv_obj_set_y(s_pet, mtg ? 48 : 58);
+    lv_image_set_src(s_coin_pet, mtg ? &jace_home : &marshmallon_home);
     if (mode == GAME_MODE_MTG) {
-        lv_label_set_text(s_home_format, "[MTG / STANDARD]");
-        lv_label_set_text(s_home_hint, "Tap player for life. Tap Marshmallon!");
+        lv_label_set_text(s_home_title, "JACE BELEREN");
+        lv_label_set_text(s_home_format, "[PLANESWALKER / JACE]");
+        lv_label_set_text(s_home_hint, "Tap a player. Tap Jace for magic!");
         lv_label_set_text(s_home_stats, "20 LIFE / TWO PLAYERS");
     } else {
+        lv_label_set_text(s_home_title, "BEN'S MARSHMALLON");
         lv_label_set_text(s_home_format, "[FAIRY / EFFECT]");
         lv_label_set_text(s_home_hint, "Tap duelist for LP. Tap Marshmallon!");
         lv_label_set_text(s_home_stats, "ATK / 300   DEF / 500");
@@ -478,7 +505,11 @@ static void show_game_over(void)
     bool ben_won = s_state.p2 == 0;
     lv_label_set_text(s_winner_name, ben_won ? "BEN WINS!" : "PLAYER 2 WINS");
     lv_label_set_text_fmt(s_final_score, "%lu - %lu", (unsigned long)s_state.p1, (unsigned long)s_state.p2);
-    lv_image_set_src(s_final_pet, ben_won ? &marshmallon_win : &marshmallon_lose);
+    if (s_state.mode == GAME_MODE_MTG) {
+        lv_image_set_src(s_final_pet, ben_won ? &jace_win : &jace_lose);
+    } else {
+        lv_image_set_src(s_final_pet, ben_won ? &marshmallon_win : &marshmallon_lose);
+    }
     show_only(s_game_over);
 }
 
@@ -505,16 +536,27 @@ static void set_pet_wiggle(void *object, int32_t progress)
     lv_image_set_rotation((lv_obj_t *)object, angle);
 }
 
+static void set_pet_spell(void *object, int32_t progress)
+{
+    float pulse = sinf((progress / 1000.0f) * 3.14159265f);
+    lv_image_set_scale((lv_obj_t *)object, LV_SCALE_NONE + (int32_t)lroundf(18.0f * pulse));
+    lv_obj_set_style_translate_y((lv_obj_t *)object, -(int32_t)lroundf(7.0f * pulse), 0);
+}
+
 static void pet_clicked(lv_event_t *event)
 {
-    audio_play_jiggle();
     lv_obj_t *pet = lv_event_get_current_target(event);
     lv_anim_delete(pet, set_pet_wiggle);
+    lv_anim_delete(pet, set_pet_spell);
+    bool mtg = s_state.mode == GAME_MODE_MTG;
+    if (!mtg) {
+        audio_play_jiggle();
+    }
 
     lv_anim_t animation;
     lv_anim_init(&animation);
     lv_anim_set_var(&animation, pet);
-    lv_anim_set_exec_cb(&animation, set_pet_wiggle);
+    lv_anim_set_exec_cb(&animation, mtg ? set_pet_spell : set_pet_wiggle);
     lv_anim_set_values(&animation, 0, 1000);
     lv_anim_set_duration(&animation, 650);
     lv_anim_start(&animation);
@@ -522,6 +564,8 @@ static void pet_clicked(lv_event_t *event)
 
 static void begin_reaction(const char *status, uint32_t badge_color, int x_offset, int y_offset, uint32_t delta)
 {
+    lv_anim_delete(s_pet, set_pet_spell);
+    lv_image_set_scale(s_pet, LV_SCALE_NONE);
     if (s_reaction_timer) {
         lv_timer_delete(s_reaction_timer);
         s_reaction_timer = NULL;
@@ -623,15 +667,17 @@ static void apply_change(change_mode_t mode)
     int x_offset = 0;
     int y_offset = 0;
     if (opponent_hit) {
-        status = delta >= 2000 ? "HUGE HIT!" : "NICE HIT!";
+        uint32_t big_hit = s_state.mode == GAME_MODE_MTG ? 5 : 2000;
+        status = delta >= big_hit ? "HUGE HIT!" : "NICE HIT!";
         badge_color = COLOR_GOLD;
         y_offset = -8;
     } else if (ben_hit) {
-        status = delta >= 2000 ? "OH NO, BEN!" : "BEN!";
+        status = s_state.mode == GAME_MODE_MTG ? "STAY FOCUSED!" :
+                 delta >= 2000 ? "OH NO, BEN!" : "BEN!";
         badge_color = COLOR_RED;
         x_offset = -8;
     } else if (ben_gain) {
-        status = "FEELING BETTER!";
+        status = s_state.mode == GAME_MODE_MTG ? "RESTORED!" : "FEELING BETTER!";
         badge_color = COLOR_GREEN;
         y_offset = -8;
     } else {
@@ -692,11 +738,12 @@ static lv_obj_t *create_player_card(lv_obj_t *parent, int y, player_t player,
 static void create_home_screen(lv_obj_t *root)
 {
     s_home = make_box(root, 0, 0, 240, 240, COLOR_RIM, COLOR_RIM, 0, 0);
-    make_box(s_home, 7, 5, 226, 29, COLOR_HEADER, 0x3A2117, 1, 3);
-    make_label(s_home, "BEN'S MARSHMALLON", 13, 12, 169, &lv_font_montserrat_12, COLOR_INK, LV_TEXT_ALIGN_LEFT);
+    s_home_header = make_box(s_home, 7, 5, 226, 29, COLOR_HEADER, 0x3A2117, 1, 3);
+    s_home_title = make_label(s_home, "BEN'S MARSHMALLON", 13, 12, 169,
+                               &lv_font_montserrat_12, COLOR_INK, LV_TEXT_ALIGN_LEFT);
 
     make_box(s_home, 7, 39, 226, 141, COLOR_DARK, COLOR_DARK, 0, 2);
-    make_box(s_home, 11, 43, 218, 133, COLOR_ART, COLOR_ART, 0, 0);
+    s_home_art = make_box(s_home, 11, 43, 218, 133, COLOR_ART, COLOR_ART, 0, 0);
 
     s_pet = make_image(s_home, &marshmallon_home, 120, 58);
     lv_image_set_pivot(s_pet, 52, 68);
@@ -710,7 +757,7 @@ static void create_home_screen(lv_obj_t *root)
     s_reaction_text = make_label(s_reaction_badge, "-0", 2, 5, 50, &lv_font_montserrat_12, 0xFFF8DF, LV_TEXT_ALIGN_CENTER);
     lv_obj_add_flag(s_reaction_badge, LV_OBJ_FLAG_HIDDEN);
 
-    make_box(s_home, 7, 184, 226, 49, COLOR_FOOTER, 0x4B2B1D, 1, 2);
+    s_home_footer = make_box(s_home, 7, 184, 226, 49, COLOR_FOOTER, 0x4B2B1D, 1, 2);
     s_home_format = make_label(s_home, "[FAIRY / EFFECT]", 12, 190, 150,
                                &lv_font_montserrat_10, COLOR_INK, LV_TEXT_ALIGN_LEFT);
     s_home_hint = make_label(s_home, "Tap duelist for LP. Tap Marshmallon!", 12, 204, 216,
@@ -793,9 +840,10 @@ static void create_review_screen(lv_obj_t *root)
 static void create_game_over_screen(lv_obj_t *root)
 {
     s_game_over = make_box(root, 0, 0, 240, 240, COLOR_RIM, COLOR_RIM, 0, 0);
-    make_label(s_game_over, "GAME OVER", 12, 9, 166, &lv_font_montserrat_16, COLOR_INK, LV_TEXT_ALIGN_LEFT);
+    s_game_over_title = make_label(s_game_over, "GAME OVER", 12, 9, 166,
+                                    &lv_font_montserrat_16, COLOR_INK, LV_TEXT_ALIGN_LEFT);
     make_box(s_game_over, 7, 35, 226, 157, COLOR_DARK, COLOR_DARK, 0, 2);
-    make_box(s_game_over, 11, 39, 218, 149, COLOR_ART, COLOR_ART, 0, 0);
+    s_game_over_art = make_box(s_game_over, 11, 39, 218, 149, COLOR_ART, COLOR_ART, 0, 0);
     s_winner_name = make_label(s_game_over, "BEN WINS!", 20, 45, 200, &lv_font_montserrat_20, COLOR_INK, LV_TEXT_ALIGN_CENTER);
     s_final_pet = make_image(s_game_over, &marshmallon_win, 74, 56);
     lv_image_set_pivot(s_final_pet, 46, 80);
@@ -811,15 +859,14 @@ static void create_coin_screen(lv_obj_t *root)
 {
     s_coin_screen = make_box(root, 0, 0, 240, 240, COLOR_RIM, COLOR_RIM, 0, 0);
     make_box(s_coin_screen, 7, 35, 226, 137, COLOR_DARK, COLOR_DARK, 0, 3);
-    make_box(s_coin_screen, 11, 39, 218, 129, 0xE8C77B, 0xE8C77B, 0, 1);
+    s_coin_art = make_box(s_coin_screen, 11, 39, 218, 129, 0xE8C77B, 0xE8C77B, 0, 1);
 
     s_coin_title = make_label(s_coin_screen, "NEW DUEL", 12, 9, 160,
                               &lv_font_montserrat_16, COLOR_INK, LV_TEXT_ALIGN_LEFT);
     s_coin_subtitle = make_label(s_coin_screen, "FLIP TO CHOOSE WHO GOES FIRST?", 16, 43, 208,
                                  &lv_font_montserrat_10, COLOR_INK, LV_TEXT_ALIGN_CENTER);
 
-    /* Marshmallon remains the host of the new-duel scene; the coin is his
-     * prop, not a replacement for the character. */
+    /* The selected format supplies the coin-flip host. */
     s_coin_pet = make_image(s_coin_screen, &marshmallon_home, 18, 53);
 
     s_coin = make_box(s_coin_screen, 137, COIN_BASE_Y, COIN_FULL_WIDTH, COIN_HEIGHT,
@@ -834,7 +881,7 @@ static void create_coin_screen(lv_obj_t *root)
     lv_obj_remove_flag(s_coin_inner, LV_OBJ_FLAG_CLICKABLE);
     s_coin_face = make_label(s_coin_inner, "?", 0, 12, 64,
                              &lv_font_montserrat_20, COLOR_CREAM, LV_TEXT_ALIGN_CENTER);
-    s_coin_detail = make_label(s_coin_inner, "DUEL COIN", 0, 39, 64,
+    s_coin_detail = make_label(s_coin_inner, "COIN", 0, 39, 64,
                                &lv_font_montserrat_10, 0xFFF0A6, LV_TEXT_ALIGN_CENTER);
 
     s_coin_sparkle_left = make_label(s_coin_screen, "*", 124, 91, 20,
@@ -867,27 +914,33 @@ static void create_mode_screen(lv_obj_t *root)
     make_label(s_mode_screen, "CHOOSE A GAME", 13, 11, 165,
                &lv_font_montserrat_16, COLOR_INK, LV_TEXT_ALIGN_LEFT);
 
-    lv_obj_t *host = make_image(s_mode_screen, &marshmallon_home, 68, 16);
-    lv_image_set_pivot(host, 52, 57);
-    lv_image_set_scale(host, 128);
-
-    lv_obj_t *yugioh = make_button(s_mode_screen, 16, 112, 208, 49,
+    lv_obj_t *yugioh = make_button(s_mode_screen, 16, 46, 208, 82,
                                    0xE8C77B, 0x5B3826, 9, "",
                                    &lv_font_montserrat_16, COLOR_INK);
-    make_label(yugioh, "YU-GI-OH", 8, 5, 192,
-               &lv_font_montserrat_16, COLOR_INK, LV_TEXT_ALIGN_CENTER);
-    make_label(yugioh, "8000 LP  /  LEFT BUTTON", 8, 29, 192,
-               &lv_font_montserrat_10, COLOR_MUTED_INK, LV_TEXT_ALIGN_CENTER);
+    make_label(yugioh, "YU-GI-OH", 12, 13, 126,
+               &lv_font_montserrat_16, COLOR_INK, LV_TEXT_ALIGN_LEFT);
+    make_label(yugioh, "8000 LP EACH", 12, 37, 126,
+               &lv_font_montserrat_10, COLOR_MUTED_INK, LV_TEXT_ALIGN_LEFT);
+    make_label(yugioh, "LEFT BUTTON", 12, 58, 126,
+               &lv_font_montserrat_10, COLOR_MUTED_INK, LV_TEXT_ALIGN_LEFT);
+    lv_obj_t *host = make_image(yugioh, &marshmallon_home, 112, -18);
+    lv_image_set_pivot(host, 52, 57);
+    lv_image_set_scale(host, 154);
     lv_obj_add_event_cb(yugioh, mode_clicked, LV_EVENT_CLICKED,
                         (void *)(intptr_t)GAME_MODE_YUGIOH);
 
-    lv_obj_t *mtg = make_button(s_mode_screen, 16, 169, 208, 49,
-                                0x3E844D, 0x214A2A, 9, "",
+    lv_obj_t *mtg = make_button(s_mode_screen, 16, 138, 208, 82,
+                                0x28557E, 0x102B48, 9, "",
                                 &lv_font_montserrat_16, COLOR_CREAM);
-    make_label(mtg, "MTG", 8, 5, 192,
-               &lv_font_montserrat_16, COLOR_CREAM, LV_TEXT_ALIGN_CENTER);
-    make_label(mtg, "20 LIFE  /  RIGHT BUTTON", 8, 29, 192,
-               &lv_font_montserrat_10, 0xE2FFE6, LV_TEXT_ALIGN_CENTER);
+    make_label(mtg, "MTG", 12, 13, 126,
+               &lv_font_montserrat_16, COLOR_CREAM, LV_TEXT_ALIGN_LEFT);
+    make_label(mtg, "20 LIFE EACH", 12, 37, 126,
+               &lv_font_montserrat_10, 0xDEFAFF, LV_TEXT_ALIGN_LEFT);
+    make_label(mtg, "RIGHT BUTTON", 12, 58, 126,
+               &lv_font_montserrat_10, 0xDEFAFF, LV_TEXT_ALIGN_LEFT);
+    host = make_image(mtg, &jace_home, 112, -18);
+    lv_image_set_pivot(host, 52, 57);
+    lv_image_set_scale(host, 154);
     lv_obj_add_event_cb(mtg, mode_clicked, LV_EVENT_CLICKED,
                         (void *)(intptr_t)GAME_MODE_MTG);
 }
