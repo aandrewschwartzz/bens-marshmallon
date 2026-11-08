@@ -32,8 +32,10 @@ static _Atomic uint32_t s_request;
 
 extern const uint8_t jiggle_start[] asm("_binary_jiggle_pcm_start");
 extern const uint8_t jiggle_end[] asm("_binary_jiggle_pcm_end");
+#if HAVE_LP_AUDIO
 extern const uint8_t lp_change_start[] asm("_binary_lp_change_pcm_start");
 extern const uint8_t lp_change_end[] asm("_binary_lp_change_pcm_end");
+#endif
 
 static esp_err_t codec_write(i2c_master_dev_handle_t codec, uint8_t reg, uint8_t value)
 {
@@ -93,10 +95,14 @@ static void audio_task(void *arg)
     while (true) {
         uint32_t newest_request = atomic_load_explicit(&s_request, memory_order_relaxed);
         if (newest_request != playing_request) {
-            const bool lp_change = (newest_request & 1U) == AUDIO_LP_CHANGE;
-            const int16_t *next_samples = (const int16_t *)(lp_change ? lp_change_start : jiggle_start);
-            size_t next_frames = (size_t)((lp_change ? lp_change_end - lp_change_start :
-                                            jiggle_end - jiggle_start) / sizeof(int16_t));
+            const int16_t *next_samples = (const int16_t *)jiggle_start;
+            size_t next_frames = (size_t)(jiggle_end - jiggle_start) / sizeof(int16_t);
+#if HAVE_LP_AUDIO
+            if ((newest_request & 1U) == AUDIO_LP_CHANGE) {
+                next_samples = (const int16_t *)lp_change_start;
+                next_frames = (size_t)(lp_change_end - lp_change_start) / sizeof(int16_t);
+            }
+#endif
             if (pos < frames) {
                 /* Continue the old waveform into the new attack over 5.8 ms.
                    Short DMA chunks bound tap-to-restart latency. */
@@ -176,9 +182,14 @@ esp_err_t audio_init(i2c_master_bus_handle_t bus)
     BaseType_t created = xTaskCreatePinnedToCore(audio_task, "jiggle_audio", 4096, NULL,
                                                   4, &s_task, 1);
     ESP_RETURN_ON_FALSE(created == pdPASS, ESP_ERR_NO_MEM, TAG, "audio task failed");
+#if HAVE_LP_AUDIO
     ESP_LOGI(TAG, "ES8311 ready: %d Hz, jiggle=%u frames, LP=%u frames", SAMPLE_RATE,
              (unsigned)((jiggle_end - jiggle_start) / sizeof(int16_t)),
              (unsigned)((lp_change_end - lp_change_start) / sizeof(int16_t)));
+#else
+    ESP_LOGI(TAG, "ES8311 ready: %d Hz, jiggle=%u frames; private LP sample absent",
+             SAMPLE_RATE, (unsigned)((jiggle_end - jiggle_start) / sizeof(int16_t)));
+#endif
     return ESP_OK;
 }
 
@@ -202,5 +213,7 @@ void audio_play_jiggle(void)
 
 void audio_play_lp_change(void)
 {
+#if HAVE_LP_AUDIO
     queue_audio(AUDIO_LP_CHANGE);
+#endif
 }

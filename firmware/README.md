@@ -42,7 +42,7 @@ The source-of-truth character vectors are in `assets/marshmallon_*.svg`. Run `py
 
 The jiggle sample is `assets/jiggle.pcm` (22,050 Hz, 16-bit mono). Run `python3 tools/generate_jello_jiggle.py` to regenerate it and the preview `assets/jiggle.wav`. The firmware duplicates the sample into stereo and sends it by I2S DMA to the ES8311. Audio uses MCLK/BCLK/WS/DOUT on GPIO 8/9/10/12 and speaker amplifier enable on GPIO 7; the codec shares the touchscreen's I2C bus on GPIO 41/42.
 
-The personal-use Life Point cue is `assets/lp_change.pcm` (22,050 Hz, 16-bit mono). It plays for both gain and loss; the jiggle sample still plays when Marshmallon is tapped. The Life Point recording is kept local and is not included in the public repository.
+The optional personal-use Life Point cue is `assets/lp_change.pcm` (22,050 Hz, 16-bit mono). When present at build time, it plays for both gain and loss in either format; the jiggle sample still plays when Marshmallon is tapped. The Life Point recording is kept local and is not included in the public repository. A clean checkout builds without it, leaving Life Point changes silent until a personal sample is supplied.
 
 To rebuild this local version from your own copy of the selected clip, run `ffmpeg -i /path/to/lp-clip.mp3 -af volume=7dB -ac 1 -ar 22050 -c:a pcm_s16le -f s16le assets/lp_change.pcm` before `idf.py build`.
 
