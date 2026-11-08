@@ -184,7 +184,7 @@ void app_main(void)
 
     esp_err_t audio_result = audio_init(board_i2c_bus());
     if (audio_result != ESP_OK) {
-        ESP_LOGW(TAG, "Jiggle audio unavailable: %s", esp_err_to_name(audio_result));
+        ESP_LOGW(TAG, "Audio unavailable: %s", esp_err_to_name(audio_result));
     }
 
     lvgl_port_lock(0);
@@ -193,5 +193,5 @@ void app_main(void)
 
     xTaskCreate(battery_task, "battery_monitor", 4096, NULL, 3, NULL);
     xTaskCreate(controls_task, "physical_controls", 4096, NULL, 4, NULL);
-    ESP_LOGI(TAG, "Ready: touch a duelist to change life points");
+    ESP_LOGI(TAG, "Ready: choose Yu-Gi-Oh or MTG");
 }

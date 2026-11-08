@@ -4,20 +4,22 @@ Native ESP-IDF/LVGL firmware for the Waveshare ESP32-S3-Touch-LCD-1.54 (SKU 3386
 
 ## Features
 
-- Two-player Life Point counter with headerless adjustment screens, full-width actions, swipe-back navigation, and separated loss/gain choices
+- Startup choice between Yu-Gi-Oh (8000 LP per player) and two-player MTG Standard (20 life per player), by touch or side buttons
+- Life counter with headerless adjustment screens, full-width actions, swipe-back navigation, and separated loss/gain choices
 - Marshmallon reactions, game-over screen, and new-game reset
 - Tap-to-wiggle Marshmallon interaction
 - Cartoon gelatin jiggle through the board's ES8311 speaker when Marshmallon is tapped
 - Rapid taps restart the jiggle sound with a short fade so playback follows each new wiggle
+- The same Life Point cue plays when either player's points increase or decrease
 - Contextual side buttons: Player 2/Ben selection, then left=gain and right=lose; hold-center powers off
-- Optional animated duel-coin flip hosted by Marshmallon at boot and after New Game (left=flip, right=skip)
+- Optional animated coin flip hosted by Marshmallon after game selection and New Game (left=flip, right=skip)
 - Explicit Start Duel action plus a three-second safety auto-advance after coin results
 - Player-specific calculator action label to prevent adjusting the wrong duelist
 - A larger, visually aligned calculator Next touch target
 - A teardrop loss treatment for Marshmallon when Ben is defeated
 - Active-player physical buttons double as Next during valid amount entry
 - Canonical Marshmallon artwork rendered directly from the prototype's SVG paths
-- Fresh 8000–8000 Life Point state after every power cycle
+- Fresh format selection after every power cycle; New Game resets the currently selected format
 - Persistent battery voltage/percentage indicator
 - Lightning bolt inside the battery meter whenever USB power is detected
 - Dismissible warning at 20% and critical warning at 10%
@@ -39,6 +41,10 @@ The component manager resolves and locks LVGL, `esp_lvgl_port`, and the CST816S 
 The source-of-truth character vectors are in `assets/marshmallon_*.svg`. Run `python3 tools/generate_marshmallon_assets.py` after changing them to regenerate the transparent PNG previews and LVGL ARGB8888 image data.
 
 The jiggle sample is `assets/jiggle.pcm` (22,050 Hz, 16-bit mono). Run `python3 tools/generate_jello_jiggle.py` to regenerate it and the preview `assets/jiggle.wav`. The firmware duplicates the sample into stereo and sends it by I2S DMA to the ES8311. Audio uses MCLK/BCLK/WS/DOUT on GPIO 8/9/10/12 and speaker amplifier enable on GPIO 7; the codec shares the touchscreen's I2C bus on GPIO 41/42.
+
+The personal-use Life Point cue is `assets/lp_change.pcm` (22,050 Hz, 16-bit mono). It plays for both gain and loss; the jiggle sample still plays when Marshmallon is tapped. The Life Point recording is kept local and is not included in the public repository.
+
+To rebuild this local version from your own copy of the selected clip, run `ffmpeg -i /path/to/lp-clip.mp3 -af volume=7dB -ac 1 -ar 22050 -c:a pcm_s16le -f s16le assets/lp_change.pcm` before `idf.py build`.
 
 ## Flash
 

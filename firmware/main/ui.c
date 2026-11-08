@@ -24,7 +24,6 @@
 #define COLOR_GREEN 0x54A95F
 #define COLOR_GOLD 0xF0A82F
 
-#define DEFAULT_LIFE_POINTS 8000U
 #define MAX_LIFE_POINTS 99999U
 #define TOUCH_SAFE_MARGIN 16
 #define COIN_CENTER_X 175
@@ -57,6 +56,7 @@ static change_mode_t s_mode = CHANGE_LOSS;
 static char s_amount[6];
 
 static lv_obj_t *s_home;
+static lv_obj_t *s_mode_screen;
 static lv_obj_t *s_amount_screen;
 static lv_obj_t *s_review_screen;
 static lv_obj_t *s_game_over;
@@ -64,6 +64,9 @@ static lv_obj_t *s_coin_screen;
 
 static lv_obj_t *s_p1_lp;
 static lv_obj_t *s_p2_lp;
+static lv_obj_t *s_home_format;
+static lv_obj_t *s_home_hint;
+static lv_obj_t *s_home_stats;
 static lv_obj_t *s_pet;
 static lv_obj_t *s_pet_status;
 static lv_obj_t *s_reaction_badge;
@@ -193,6 +196,7 @@ static lv_obj_t *make_image(lv_obj_t *parent, const lv_image_dsc_t *source, int 
 static void show_only(lv_obj_t *screen)
 {
     lv_obj_add_flag(s_home, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(s_mode_screen, LV_OBJ_FLAG_HIDDEN);
     lv_obj_add_flag(s_amount_screen, LV_OBJ_FLAG_HIDDEN);
     lv_obj_add_flag(s_review_screen, LV_OBJ_FLAG_HIDDEN);
     lv_obj_add_flag(s_game_over, LV_OBJ_FLAG_HIDDEN);
@@ -242,13 +246,20 @@ static void update_review_screen(void)
     uint32_t after_loss = amount >= current ? 0 : current - amount;
     uint32_t after_gain = current > MAX_LIFE_POINTS - amount ? MAX_LIFE_POINTS : current + amount;
 
-    lv_label_set_text_fmt(s_review_player, "%s CURRENTLY HAS %lu LP",
-                          selected_name(), (unsigned long)current);
+    if (s_state.mode == GAME_MODE_MTG) {
+        lv_label_set_text_fmt(s_review_player, "%s HAS %lu LIFE",
+                              selected_name(), (unsigned long)current);
+        lv_label_set_text_fmt(s_loss_result, "Life total becomes %lu", (unsigned long)after_loss);
+        lv_label_set_text_fmt(s_gain_result, "Life total becomes %lu", (unsigned long)after_gain);
+    } else {
+        lv_label_set_text_fmt(s_review_player, "%s CURRENTLY HAS %lu LP",
+                              selected_name(), (unsigned long)current);
+        lv_label_set_text_fmt(s_loss_result, "Life Points become %lu", (unsigned long)after_loss);
+        lv_label_set_text_fmt(s_gain_result, "Life Points become %lu", (unsigned long)after_gain);
+    }
     lv_label_set_text_fmt(s_review_amount, "CHANGE BY %lu", (unsigned long)amount);
     lv_label_set_text_fmt(s_loss_action, "RIGHT: LOSE %lu", (unsigned long)amount);
-    lv_label_set_text_fmt(s_loss_result, "Life Points become %lu", (unsigned long)after_loss);
     lv_label_set_text_fmt(s_gain_action, "LEFT: GAIN %lu", (unsigned long)amount);
-    lv_label_set_text_fmt(s_gain_result, "Life Points become %lu", (unsigned long)after_gain);
 }
 
 static void show_home(void)
@@ -261,7 +272,7 @@ static void set_coin_face(player_t player, bool mystery)
     if (mystery) {
         lv_obj_set_style_bg_color(s_coin_inner, color(0x6B2E74), 0);
         lv_label_set_text(s_coin_face, "?");
-        lv_label_set_text(s_coin_detail, "DUEL COIN");
+        lv_label_set_text(s_coin_detail, s_state.mode == GAME_MODE_MTG ? "GAME COIN" : "DUEL COIN");
         return;
     }
 
@@ -308,7 +319,7 @@ static void coin_result_timeout(lv_timer_t *timer)
 {
     (void)timer;
     s_coin_result_timer = NULL;
-    ESP_LOGI(TAG, "Coin result complete; starting duel");
+    ESP_LOGI(TAG, "Coin result complete; starting game");
     show_home();
 }
 
@@ -319,7 +330,8 @@ static void finish_coin_flip(void)
     set_coin_face(s_coin_result, false);
     lv_label_set_text_fmt(s_coin_title, "%s GOES FIRST!",
                           s_coin_result == PLAYER_BEN ? "BEN" : "PLAYER 2");
-    lv_label_set_text(s_coin_subtitle, "START DUEL OR WAIT 3 SECONDS");
+    lv_label_set_text(s_coin_subtitle, s_state.mode == GAME_MODE_MTG ?
+                      "START GAME OR WAIT 3 SECONDS" : "START DUEL OR WAIT 3 SECONDS");
     lv_obj_remove_flag(s_coin_sparkle_left, LV_OBJ_FLAG_HIDDEN);
     lv_obj_remove_flag(s_coin_sparkle_right, LV_OBJ_FLAG_HIDDEN);
     lv_obj_remove_flag(s_coin_start, LV_OBJ_FLAG_HIDDEN);
@@ -367,8 +379,11 @@ static void show_coin_offer(void)
     s_coin_frame = 0;
     set_coin_geometry(COIN_FULL_WIDTH, COIN_BASE_Y);
     set_coin_face(PLAYER_BEN, true);
-    lv_label_set_text(s_coin_title, "NEW DUEL");
-    lv_label_set_text(s_coin_subtitle, "FLIP TO CHOOSE WHO GOES FIRST?");
+    lv_label_set_text(s_coin_title, s_state.mode == GAME_MODE_MTG ? "NEW GAME" : "NEW DUEL");
+    lv_label_set_text(s_coin_subtitle, s_state.mode == GAME_MODE_MTG ?
+                      "FLIP TO CHOOSE FIRST PLAYER?" : "FLIP TO CHOOSE WHO GOES FIRST?");
+    lv_label_set_text(lv_obj_get_child(s_coin_start, 0),
+                      s_state.mode == GAME_MODE_MTG ? "START GAME" : "START DUEL");
     lv_obj_remove_flag(s_coin_yes, LV_OBJ_FLAG_HIDDEN);
     lv_obj_remove_flag(s_coin_no, LV_OBJ_FLAG_HIDDEN);
     lv_obj_add_flag(s_coin_start, LV_OBJ_FLAG_HIDDEN);
@@ -388,7 +403,8 @@ static void start_coin_flip(void)
     s_coin_anim_face = -1;
     s_coin_frame = 0;
     lv_label_set_text(s_coin_title, "FLIPPING...");
-    lv_label_set_text(s_coin_subtitle, "THE DUEL COIN IS IN THE AIR");
+    lv_label_set_text(s_coin_subtitle, s_state.mode == GAME_MODE_MTG ?
+                      "THE COIN IS IN THE AIR" : "THE DUEL COIN IS IN THE AIR");
     lv_obj_add_flag(s_coin_yes, LV_OBJ_FLAG_HIDDEN);
     lv_obj_add_flag(s_coin_no, LV_OBJ_FLAG_HIDDEN);
 
@@ -398,11 +414,32 @@ static void start_coin_flip(void)
 
 static void reset_game_and_offer_coin(void)
 {
-    s_state.p1 = DEFAULT_LIFE_POINTS;
-    s_state.p2 = DEFAULT_LIFE_POINTS;
+    game_state_reset(&s_state, s_state.mode);
     refresh_life_labels();
     game_state_save(&s_state);
     show_coin_offer();
+}
+
+static void select_game_mode(game_mode_t mode)
+{
+    game_state_reset(&s_state, mode);
+    refresh_life_labels();
+    if (mode == GAME_MODE_MTG) {
+        lv_label_set_text(s_home_format, "[MTG / STANDARD]");
+        lv_label_set_text(s_home_hint, "Tap player for life. Tap Marshmallon!");
+        lv_label_set_text(s_home_stats, "20 LIFE / TWO PLAYERS");
+    } else {
+        lv_label_set_text(s_home_format, "[FAIRY / EFFECT]");
+        lv_label_set_text(s_home_hint, "Tap duelist for LP. Tap Marshmallon!");
+        lv_label_set_text(s_home_stats, "ATK / 300   DEF / 500");
+    }
+    game_state_save(&s_state);
+    show_coin_offer();
+}
+
+static void mode_clicked(lv_event_t *event)
+{
+    select_game_mode((game_mode_t)(intptr_t)lv_event_get_user_data(event));
 }
 
 static void show_amount(player_t player)
@@ -605,6 +642,7 @@ static void apply_change(change_mode_t mode)
 
     show_home();
     begin_reaction(status, badge_color, x_offset, y_offset, delta);
+    audio_play_lp_change();
 }
 
 static void apply_clicked(lv_event_t *event)
@@ -673,10 +711,13 @@ static void create_home_screen(lv_obj_t *root)
     lv_obj_add_flag(s_reaction_badge, LV_OBJ_FLAG_HIDDEN);
 
     make_box(s_home, 7, 184, 226, 49, COLOR_FOOTER, 0x4B2B1D, 1, 2);
-    make_label(s_home, "[FAIRY / EFFECT]", 12, 190, 150, &lv_font_montserrat_10, COLOR_INK, LV_TEXT_ALIGN_LEFT);
-    make_label(s_home, "Tap duelist for LP. Tap Marshmallon!", 12, 204, 216, &lv_font_montserrat_10, 0x5D493D, LV_TEXT_ALIGN_LEFT);
+    s_home_format = make_label(s_home, "[FAIRY / EFFECT]", 12, 190, 150,
+                               &lv_font_montserrat_10, COLOR_INK, LV_TEXT_ALIGN_LEFT);
+    s_home_hint = make_label(s_home, "Tap duelist for LP. Tap Marshmallon!", 12, 204, 216,
+                             &lv_font_montserrat_10, 0x5D493D, LV_TEXT_ALIGN_LEFT);
     make_box(s_home, 12, 218, 216, 1, 0x6A4633, 0x6A4633, 0, 0);
-    make_label(s_home, "ATK / 300   DEF / 500", 12, 221, 216, &lv_font_montserrat_10, COLOR_INK, LV_TEXT_ALIGN_RIGHT);
+    s_home_stats = make_label(s_home, "ATK / 300   DEF / 500", 12, 221, 216,
+                              &lv_font_montserrat_10, COLOR_INK, LV_TEXT_ALIGN_RIGHT);
 }
 
 static void create_amount_screen(lv_obj_t *root)
@@ -819,6 +860,38 @@ static void create_coin_screen(lv_obj_t *root)
     lv_obj_add_flag(s_coin_screen, LV_OBJ_FLAG_HIDDEN);
 }
 
+static void create_mode_screen(lv_obj_t *root)
+{
+    s_mode_screen = make_box(root, 0, 0, 240, 240, COLOR_RIM, COLOR_RIM, 0, 0);
+    make_box(s_mode_screen, 7, 5, 226, 29, COLOR_HEADER, 0x3A2117, 1, 3);
+    make_label(s_mode_screen, "CHOOSE A GAME", 13, 11, 165,
+               &lv_font_montserrat_16, COLOR_INK, LV_TEXT_ALIGN_LEFT);
+
+    lv_obj_t *host = make_image(s_mode_screen, &marshmallon_home, 68, 16);
+    lv_image_set_pivot(host, 52, 57);
+    lv_image_set_scale(host, 128);
+
+    lv_obj_t *yugioh = make_button(s_mode_screen, 16, 112, 208, 49,
+                                   0xE8C77B, 0x5B3826, 9, "",
+                                   &lv_font_montserrat_16, COLOR_INK);
+    make_label(yugioh, "YU-GI-OH", 8, 5, 192,
+               &lv_font_montserrat_16, COLOR_INK, LV_TEXT_ALIGN_CENTER);
+    make_label(yugioh, "8000 LP  /  LEFT BUTTON", 8, 29, 192,
+               &lv_font_montserrat_10, COLOR_MUTED_INK, LV_TEXT_ALIGN_CENTER);
+    lv_obj_add_event_cb(yugioh, mode_clicked, LV_EVENT_CLICKED,
+                        (void *)(intptr_t)GAME_MODE_YUGIOH);
+
+    lv_obj_t *mtg = make_button(s_mode_screen, 16, 169, 208, 49,
+                                0x3E844D, 0x214A2A, 9, "",
+                                &lv_font_montserrat_16, COLOR_CREAM);
+    make_label(mtg, "MTG", 8, 5, 192,
+               &lv_font_montserrat_16, COLOR_CREAM, LV_TEXT_ALIGN_CENTER);
+    make_label(mtg, "20 LIFE  /  RIGHT BUTTON", 8, 29, 192,
+               &lv_font_montserrat_10, 0xE2FFE6, LV_TEXT_ALIGN_CENTER);
+    lv_obj_add_event_cb(mtg, mode_clicked, LV_EVENT_CLICKED,
+                        (void *)(intptr_t)GAME_MODE_MTG);
+}
+
 static void create_battery_chip(void)
 {
     s_battery_chip = make_box(lv_layer_top(), 179, 5, 57, 22, 0x2B1B12, 0xFFF5D9, 1, 7);
@@ -914,6 +987,10 @@ void ui_update_battery(const battery_status_t *battery)
 
 void ui_handle_left_button(void)
 {
+    if (!lv_obj_has_flag(s_mode_screen, LV_OBJ_FLAG_HIDDEN)) {
+        select_game_mode(GAME_MODE_YUGIOH);
+        return;
+    }
     if (!lv_obj_has_flag(s_coin_screen, LV_OBJ_FLAG_HIDDEN)) {
         if (s_coin_state == COIN_OFFER) {
             start_coin_flip();
@@ -931,6 +1008,10 @@ void ui_handle_left_button(void)
 
 void ui_handle_right_button(void)
 {
+    if (!lv_obj_has_flag(s_mode_screen, LV_OBJ_FLAG_HIDDEN)) {
+        select_game_mode(GAME_MODE_MTG);
+        return;
+    }
     if (!lv_obj_has_flag(s_coin_screen, LV_OBJ_FLAG_HIDDEN)) {
         if (s_coin_state == COIN_OFFER || s_coin_state == COIN_RESULT) {
             if (s_coin_state == COIN_OFFER) {
@@ -960,8 +1041,9 @@ void ui_create(game_state_t initial_state, const battery_status_t *battery)
     create_review_screen(root);
     create_game_over_screen(root);
     create_coin_screen(root);
+    create_mode_screen(root);
     create_battery_chip();
     ui_update_battery(battery);
-    reset_game_and_offer_coin();
-    ESP_LOGI(TAG, "UI ready: fresh duel, coin flip offered");
+    show_only(s_mode_screen);
+    ESP_LOGI(TAG, "UI ready: choose Yu-Gi-Oh or MTG");
 }

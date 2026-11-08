@@ -21,14 +21,19 @@
 #define I2S_DOUT_PIN GPIO_NUM_12
 #define AUDIO_CHUNK_FRAMES 128
 #define RESTART_FADE_FRAMES 128
+#define AUDIO_JIGGLE 0U
+#define AUDIO_LP_CHANGE 1U
 
 static const char *TAG = "jiggle_audio";
 static i2s_chan_handle_t s_tx;
 static TaskHandle_t s_task;
-static _Atomic uint32_t s_request_id;
+/* One atomic word keeps the requested sample and its generation together. */
+static _Atomic uint32_t s_request;
 
 extern const uint8_t jiggle_start[] asm("_binary_jiggle_pcm_start");
 extern const uint8_t jiggle_end[] asm("_binary_jiggle_pcm_end");
+extern const uint8_t lp_change_start[] asm("_binary_lp_change_pcm_start");
+extern const uint8_t lp_change_end[] asm("_binary_lp_change_pcm_end");
 
 static esp_err_t codec_write(i2c_master_dev_handle_t codec, uint8_t reg, uint8_t value)
 {
@@ -80,35 +85,43 @@ static bool write_stereo(const int16_t *stereo, size_t frames)
 static void audio_task(void *arg)
 {
     (void)arg;
-    const size_t frames = (size_t)(jiggle_end - jiggle_start) / sizeof(int16_t);
+    size_t frames = (size_t)(jiggle_end - jiggle_start) / sizeof(int16_t);
     const int16_t *samples = (const int16_t *)jiggle_start;
     int16_t stereo[AUDIO_CHUNK_FRAMES * 2];
-    uint32_t playing_id = 0;
+    uint32_t playing_request = 0;
     size_t pos = frames;
     while (true) {
-        uint32_t newest_id = atomic_load_explicit(&s_request_id, memory_order_relaxed);
-        if (newest_id != playing_id) {
+        uint32_t newest_request = atomic_load_explicit(&s_request, memory_order_relaxed);
+        if (newest_request != playing_request) {
+            const bool lp_change = (newest_request & 1U) == AUDIO_LP_CHANGE;
+            const int16_t *next_samples = (const int16_t *)(lp_change ? lp_change_start : jiggle_start);
+            size_t next_frames = (size_t)((lp_change ? lp_change_end - lp_change_start :
+                                            jiggle_end - jiggle_start) / sizeof(int16_t));
             if (pos < frames) {
                 /* Continue the old waveform into the new attack over 5.8 ms.
                    Short DMA chunks bound tap-to-restart latency. */
                 for (size_t i = 0; i < RESTART_FADE_FRAMES; ++i) {
                     int32_t old_sample = pos + i < frames ? samples[pos + i] : 0;
-                    int32_t new_sample = samples[i];
+                    int32_t new_sample = next_samples[i];
                     int16_t mixed = (int16_t)((old_sample * (RESTART_FADE_FRAMES - i) +
                                                new_sample * i) / RESTART_FADE_FRAMES);
                     stereo[2 * i] = mixed;
                     stereo[2 * i + 1] = mixed;
                 }
                 if (!write_stereo(stereo, RESTART_FADE_FRAMES)) {
+                    samples = next_samples;
+                    frames = next_frames;
                     pos = frames;
-                    playing_id = newest_id;
+                    playing_request = newest_request;
                     continue;
                 }
                 pos = RESTART_FADE_FRAMES;
             } else {
                 pos = 0;
             }
-            playing_id = newest_id;
+            samples = next_samples;
+            frames = next_frames;
+            playing_request = newest_request;
         }
         if (pos == frames) {
             ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
@@ -163,15 +176,31 @@ esp_err_t audio_init(i2c_master_bus_handle_t bus)
     BaseType_t created = xTaskCreatePinnedToCore(audio_task, "jiggle_audio", 4096, NULL,
                                                   4, &s_task, 1);
     ESP_RETURN_ON_FALSE(created == pdPASS, ESP_ERR_NO_MEM, TAG, "audio task failed");
-    ESP_LOGI(TAG, "ES8311 ready: %d Hz, %u frames", SAMPLE_RATE,
-             (unsigned)((jiggle_end - jiggle_start) / sizeof(int16_t)));
+    ESP_LOGI(TAG, "ES8311 ready: %d Hz, jiggle=%u frames, LP=%u frames", SAMPLE_RATE,
+             (unsigned)((jiggle_end - jiggle_start) / sizeof(int16_t)),
+             (unsigned)((lp_change_end - lp_change_start) / sizeof(int16_t)));
     return ESP_OK;
+}
+
+static void queue_audio(uint32_t kind)
+{
+    if (s_task != NULL) {
+        uint32_t previous = atomic_load_explicit(&s_request, memory_order_relaxed);
+        uint32_t next;
+        do {
+            next = ((previous & ~1U) + 2U) | kind;
+        } while (!atomic_compare_exchange_weak_explicit(&s_request, &previous, next,
+                                                         memory_order_relaxed, memory_order_relaxed));
+        xTaskNotifyGive(s_task);
+    }
 }
 
 void audio_play_jiggle(void)
 {
-    if (s_task != NULL) {
-        atomic_fetch_add_explicit(&s_request_id, 1, memory_order_relaxed);
-        xTaskNotifyGive(s_task);
-    }
+    queue_audio(AUDIO_JIGGLE);
+}
+
+void audio_play_lp_change(void)
+{
+    queue_audio(AUDIO_LP_CHANGE);
 }
