@@ -19,6 +19,8 @@
 #define RIGHT_BUTTON_PIN GPIO_NUM_4
 #define BUTTON_DEBOUNCE_MS 40
 #define POWER_HOLD_MS 1500
+#define LIFE_REPEAT_DELAY_MS 500
+#define LIFE_REPEAT_INTERVAL_MS 150
 
 static const char *TAG = "marshmallon";
 
@@ -28,21 +30,30 @@ typedef struct {
     bool stable_pressed;
     bool armed;
     bool action_fired;
+    bool repeat_enabled;
     TickType_t raw_changed_at;
     TickType_t pressed_at;
+    TickType_t repeated_at;
 } physical_button_t;
 
-static void handle_side_button(bool right)
+static bool handle_side_button(bool right, bool repeat)
 {
+    bool can_repeat = false;
     if (lvgl_port_lock(0)) {
-        if (right) {
-            ui_handle_right_button();
-        } else {
-            ui_handle_left_button();
+        can_repeat = ui_mtg_controls_active();
+        if (!repeat || can_repeat) {
+            if (right) {
+                ui_handle_right_button();
+            } else {
+                ui_handle_left_button();
+            }
         }
         lvgl_port_unlock();
     }
-    ESP_LOGI(TAG, "Physical shortcut: %s button", right ? "right" : "left");
+    if (!repeat) {
+        ESP_LOGI(TAG, "Physical shortcut: %s button", right ? "right" : "left");
+    }
+    return can_repeat;
 }
 
 static void power_down(void)
@@ -102,9 +113,22 @@ static bool update_button(physical_button_t *button, TickType_t now)
         } else {
             button->armed = true;
             button->action_fired = false;
+            button->repeat_enabled = false;
         }
     }
     return false;
+}
+
+static void repeat_side_button(physical_button_t *button, bool right, TickType_t now)
+{
+    if (button->repeat_enabled && button->stable_pressed && button->raw_pressed &&
+        now - button->pressed_at >= pdMS_TO_TICKS(LIFE_REPEAT_DELAY_MS) &&
+        now - button->repeated_at >= pdMS_TO_TICKS(LIFE_REPEAT_INTERVAL_MS)) {
+        button->repeated_at = now;
+        if (!handle_side_button(right, true)) {
+            button->repeat_enabled = false;
+        }
+    }
 }
 
 static void controls_task(void *argument)
@@ -127,16 +151,20 @@ static void controls_task(void *argument)
     init_button_state(&left, LEFT_BUTTON_PIN);
     init_button_state(&center, CENTER_BUTTON_PIN);
     init_button_state(&right, RIGHT_BUTTON_PIN);
-    ESP_LOGI(TAG, "Buttons ready: left=Player 2/gain, right=Ben/lose, hold center=power off");
+    ESP_LOGI(TAG, "Buttons ready: contextual shortcuts; MTG left=-1/right=+1; hold center=power off");
 
     while (true) {
         TickType_t now = xTaskGetTickCount();
         if (update_button(&left, now)) {
-            handle_side_button(false);
+            left.repeat_enabled = handle_side_button(false, false);
+            left.repeated_at = now;
         }
         if (update_button(&right, now)) {
-            handle_side_button(true);
+            right.repeat_enabled = handle_side_button(true, false);
+            right.repeated_at = now;
         }
+        repeat_side_button(&left, false, now);
+        repeat_side_button(&right, true, now);
         update_button(&center, now);
         if (center.stable_pressed && center.armed && !center.action_fired &&
             now - center.pressed_at >= pdMS_TO_TICKS(POWER_HOLD_MS)) {
@@ -184,7 +212,7 @@ void app_main(void)
 
     esp_err_t audio_result = audio_init(board_i2c_bus());
     if (audio_result != ESP_OK) {
-        ESP_LOGW(TAG, "Jiggle audio unavailable: %s", esp_err_to_name(audio_result));
+        ESP_LOGW(TAG, "Audio unavailable: %s", esp_err_to_name(audio_result));
     }
 
     lvgl_port_lock(0);
@@ -193,5 +221,5 @@ void app_main(void)
 
     xTaskCreate(battery_task, "battery_monitor", 4096, NULL, 3, NULL);
     xTaskCreate(controls_task, "physical_controls", 4096, NULL, 4, NULL);
-    ESP_LOGI(TAG, "Ready: touch a duelist to change life points");
+    ESP_LOGI(TAG, "Ready: choose Yu-Gi-Oh or MTG");
 }

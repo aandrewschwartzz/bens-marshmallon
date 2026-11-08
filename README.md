@@ -24,4 +24,4 @@ Open `index.html` in any modern browser. The package is self-contained: no depen
 
 The interface is designed at the native 240 × 240 resolution of the Waveshare ESP32-S3-Touch-LCD-1.54 (SKU 33869). The original browser prototype remains available in `index.html` and `source/`.
 
-The native ESP-IDF/LVGL port is now in `firmware/`. It preserves the duel-counter flow and adds saved Life Points plus live battery level, charging state, and low/critical battery warnings. See `firmware/README.md` for build and flash instructions.
+The native ESP-IDF/LVGL port is in `firmware/`. It offers Yu-Gi-Oh at 8000 LP or two-player MTG at 20 life when the board starts, plus live battery level, charging state, and low/critical battery warnings. MTG uses Jace and direct minus/plus life controls, with hold-to-repeat on touch and side buttons. Life totals reset each power cycle. See `firmware/README.md` for build and flash instructions.

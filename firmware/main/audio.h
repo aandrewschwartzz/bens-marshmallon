@@ -5,3 +5,4 @@
 
 esp_err_t audio_init(i2c_master_bus_handle_t bus);
 void audio_play_jiggle(void);
+void audio_play_lp_change(void);

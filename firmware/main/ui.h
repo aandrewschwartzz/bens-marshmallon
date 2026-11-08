@@ -5,5 +5,6 @@
 
 void ui_create(game_state_t initial_state, const battery_status_t *battery);
 void ui_update_battery(const battery_status_t *battery);
+bool ui_mtg_controls_active(void);
 void ui_handle_left_button(void);
 void ui_handle_right_button(void);

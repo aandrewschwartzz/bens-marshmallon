@@ -1,5 +1,6 @@
 firmware/build/
 firmware/managed_components/
 firmware/sdkconfig
+firmware/assets/lp_change.pcm
 backups/
 .DS_Store

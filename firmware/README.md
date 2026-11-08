@@ -4,20 +4,27 @@ Native ESP-IDF/LVGL firmware for the Waveshare ESP32-S3-Touch-LCD-1.54 (SKU 3386
 
 ## Features
 
-- Two-player Life Point counter with headerless adjustment screens, full-width actions, swipe-back navigation, and separated loss/gain choices
-- Marshmallon reactions, game-over screen, and new-game reset
+- Startup choice between Yu-Gi-Oh (8000 LP per player) and two-player MTG Standard (20 life per player), by touch or side buttons
+- Yu-Gi-Oh calculator with headerless adjustment screens, full-width actions, swipe-back navigation, and separated loss/gain choices
+- MTG has large minus/plus controls beside each life total: one life per tap; hold to repeat
+- Tap an MTG total to select a player for the side buttons (left=-1, right=+1); side-button holds also repeat
+- MTG shows the total change during a burst of taps; life changes are silent pending a separate MTG cue
+- MTG stays editable at zero life so accidental changes can be reversed; hold Reset to start a new 20-life game
+- Format-specific characters: Marshmallon for Yu-Gi-Oh, Jace Beleren for MTG
+- Yu-Gi-Oh character reactions, game-over screen, and new-game reset
 - Tap-to-wiggle Marshmallon interaction
 - Cartoon gelatin jiggle through the board's ES8311 speaker when Marshmallon is tapped
 - Rapid taps restart the jiggle sound with a short fade so playback follows each new wiggle
-- Contextual side buttons: Player 2/Ben selection, then left=gain and right=lose; hold-center powers off
-- Optional animated duel-coin flip hosted by Marshmallon at boot and after New Game (left=flip, right=skip)
+- The same Yu-Gi-Oh Life Point cue plays when either duelist's points increase or decrease in Yu-Gi-Oh mode
+- Yu-Gi-Oh side buttons: Player 2/Ben selection, then left=gain and right=lose; hold-center powers off in either format
+- Optional animated coin flip hosted by the selected character after game selection and New Game (left=flip, right=skip)
 - Explicit Start Duel action plus a three-second safety auto-advance after coin results
 - Player-specific calculator action label to prevent adjusting the wrong duelist
 - A larger, visually aligned calculator Next touch target
 - A teardrop loss treatment for Marshmallon when Ben is defeated
 - Active-player physical buttons double as Next during valid amount entry
 - Canonical Marshmallon artwork rendered directly from the prototype's SVG paths
-- Fresh 8000–8000 Life Point state after every power cycle
+- Fresh format selection after every power cycle; New Game resets the currently selected format
 - Persistent battery voltage/percentage indicator
 - Lightning bolt inside the battery meter whenever USB power is detected
 - Dismissible warning at 20% and critical warning at 10%
@@ -38,7 +45,13 @@ The component manager resolves and locks LVGL, `esp_lvgl_port`, and the CST816S 
 
 The source-of-truth character vectors are in `assets/marshmallon_*.svg`. Run `python3 tools/generate_marshmallon_assets.py` after changing them to regenerate the transparent PNG previews and LVGL ARGB8888 image data.
 
+MTG uses original stylized Jace artwork in `assets/jace_*.svg`, based on his classic hooded appearance. Regenerate its previews and image data with `python3 tools/generate_jace_assets.py` (Pillow plus either `rsvg-convert` or CairoSVG). Jace appears on the startup picker, beside the direct life controls, and in the coin scene.
+
 The jiggle sample is `assets/jiggle.pcm` (22,050 Hz, 16-bit mono). Run `python3 tools/generate_jello_jiggle.py` to regenerate it and the preview `assets/jiggle.wav`. The firmware duplicates the sample into stereo and sends it by I2S DMA to the ES8311. Audio uses MCLK/BCLK/WS/DOUT on GPIO 8/9/10/12 and speaker amplifier enable on GPIO 7; the codec shares the touchscreen's I2C bus on GPIO 41/42.
+
+The optional personal-use Yu-Gi-Oh Life Point cue is `assets/lp_change.pcm` (22,050 Hz, 16-bit mono). When present at build time, it plays for both gain and loss in Yu-Gi-Oh mode; MTG never uses this recording. The jiggle sample still plays when Marshmallon is tapped. The Life Point recording is kept local and is not included in the public repository. A clean checkout builds without it, leaving Yu-Gi-Oh Life Point changes silent until a personal sample is supplied. MTG life changes are currently silent while a separate cue is selected.
+
+To rebuild this local version from your own copy of the selected clip, run `ffmpeg -i /path/to/lp-clip.mp3 -af volume=7dB -ac 1 -ar 22050 -c:a pcm_s16le -f s16le assets/lp_change.pcm` before `idf.py build`.
 
 ## Flash
 
