@@ -8,14 +8,14 @@ Native ESP-IDF/LVGL firmware for the Waveshare ESP32-S3-Touch-LCD-1.54 (SKU 3386
 - Yu-Gi-Oh calculator with headerless adjustment screens, full-width actions, swipe-back navigation, and separated loss/gain choices
 - MTG has large minus/plus controls beside each life total: one life per tap; hold to repeat
 - Tap an MTG total to select a player for the side buttons (left=-1, right=+1); side-button holds also repeat
-- MTG shows the total change during a burst of taps and plays one Life Point cue after the changes settle
+- MTG shows the total change during a burst of taps; life changes are silent pending a separate MTG cue
 - MTG stays editable at zero life so accidental changes can be reversed; hold Reset to start a new 20-life game
 - Format-specific characters: Marshmallon for Yu-Gi-Oh, Jace Beleren for MTG
 - Yu-Gi-Oh character reactions, game-over screen, and new-game reset
 - Tap-to-wiggle Marshmallon interaction
 - Cartoon gelatin jiggle through the board's ES8311 speaker when Marshmallon is tapped
 - Rapid taps restart the jiggle sound with a short fade so playback follows each new wiggle
-- The same Life Point cue plays when either player's points increase or decrease
+- The same Yu-Gi-Oh Life Point cue plays when either duelist's points increase or decrease in Yu-Gi-Oh mode
 - Yu-Gi-Oh side buttons: Player 2/Ben selection, then left=gain and right=lose; hold-center powers off in either format
 - Optional animated coin flip hosted by the selected character after game selection and New Game (left=flip, right=skip)
 - Explicit Start Duel action plus a three-second safety auto-advance after coin results
@@ -49,7 +49,7 @@ MTG uses original stylized Jace artwork in `assets/jace_*.svg`, based on his cla
 
 The jiggle sample is `assets/jiggle.pcm` (22,050 Hz, 16-bit mono). Run `python3 tools/generate_jello_jiggle.py` to regenerate it and the preview `assets/jiggle.wav`. The firmware duplicates the sample into stereo and sends it by I2S DMA to the ES8311. Audio uses MCLK/BCLK/WS/DOUT on GPIO 8/9/10/12 and speaker amplifier enable on GPIO 7; the codec shares the touchscreen's I2C bus on GPIO 41/42.
 
-The optional personal-use Life Point cue is `assets/lp_change.pcm` (22,050 Hz, 16-bit mono). When present at build time, it plays for both gain and loss in either format; the jiggle sample still plays when Marshmallon is tapped. The Life Point recording is kept local and is not included in the public repository. A clean checkout builds without it, leaving Life Point changes silent until a personal sample is supplied.
+The optional personal-use Yu-Gi-Oh Life Point cue is `assets/lp_change.pcm` (22,050 Hz, 16-bit mono). When present at build time, it plays for both gain and loss in Yu-Gi-Oh mode; MTG never uses this recording. The jiggle sample still plays when Marshmallon is tapped. The Life Point recording is kept local and is not included in the public repository. A clean checkout builds without it, leaving Yu-Gi-Oh Life Point changes silent until a personal sample is supplied. MTG life changes are currently silent while a separate cue is selected.
 
 To rebuild this local version from your own copy of the selected clip, run `ffmpeg -i /path/to/lp-clip.mp3 -af volume=7dB -ac 1 -ar 22050 -c:a pcm_s16le -f s16le assets/lp_change.pcm` before `idf.py build`.
 

@@ -64,7 +64,6 @@ static lv_obj_t *s_mtg_changes[2];
 static lv_obj_t *s_mtg_selected_hint;
 static int32_t s_mtg_delta[2];
 static lv_timer_t *s_mtg_feedback_timer[2];
-static lv_timer_t *s_mtg_audio_timer;
 static lv_obj_t *s_mode_screen;
 static lv_obj_t *s_amount_screen;
 static lv_obj_t *s_review_screen;
@@ -257,13 +256,6 @@ static void clear_mtg_delta(lv_timer_t *timer)
     lv_label_set_text(s_mtg_changes[player], "");
 }
 
-static void play_mtg_change(lv_timer_t *timer)
-{
-    (void)timer;
-    s_mtg_audio_timer = NULL;
-    audio_play_lp_change();
-}
-
 static void reset_mtg_feedback(void)
 {
     for (int i = 0; i < 2; ++i) {
@@ -273,10 +265,6 @@ static void reset_mtg_feedback(void)
         }
         s_mtg_delta[i] = 0;
         lv_label_set_text(s_mtg_changes[i], "");
-    }
-    if (s_mtg_audio_timer) {
-        lv_timer_delete(s_mtg_audio_timer);
-        s_mtg_audio_timer = NULL;
     }
 }
 
@@ -308,13 +296,6 @@ static void adjust_mtg_life(player_t player, change_mode_t mode)
     s_mtg_feedback_timer[player] = lv_timer_create(clear_mtg_delta, 1200, (void *)(intptr_t)player);
     lv_timer_set_repeat_count(s_mtg_feedback_timer[player], 1);
 
-    /* One cue after a burst of taps or a hold, rather than restarting it at
-     * every repeated point. Totals and the cumulative change update at once. */
-    if (s_mtg_audio_timer) {
-        lv_timer_delete(s_mtg_audio_timer);
-    }
-    s_mtg_audio_timer = lv_timer_create(play_mtg_change, 300, NULL);
-    lv_timer_set_repeat_count(s_mtg_audio_timer, 1);
 }
 
 static void mtg_adjust_pressed(lv_event_t *event)
@@ -796,7 +777,9 @@ static void apply_change(change_mode_t mode)
 
     show_home();
     begin_reaction(status, badge_color, x_offset, y_offset, delta);
-    audio_play_lp_change();
+    if (s_state.mode == GAME_MODE_YUGIOH) {
+        audio_play_lp_change();
+    }
 }
 
 static void apply_clicked(lv_event_t *event)
